@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Customer Garage Live Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1E3A5F;
+      --primary-dark: #152A45;
+      --accent: #F97316;
+      --accent-hover: #EA580C;
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --text: #1E293B;
+      --muted: #64748B;
+      --border: #E2E8F0;
+
+      /* Status Colors */
+      --status-gray: #94A3B8;
+      --status-blue: #3B82F6;
+      --status-amber: #F59E0B;
+      --status-indigo: #6366F1;
+      --status-teal: #14B8A6;
+      --status-orange: #F97316;
+      --status-green: #22C55E;
+      --status-red: #EF4444;
+
+      /* Semantic Alert */
+      --alert-bg: #FFF7ED;
+      --alert-border: #FFEDD5;
+      --alert-text: #9A3412;
+
+      --card-radius: 14px;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 12px 24px -4px rgba(30, 58, 95, 0.12);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0F1520;
+        --surface: #171F2C;
+        --text: #E6EAF0;
+        --muted: #8B96A5;
+        --border: #2A3444;
+        --alert-bg: rgba(249, 115, 22, 0.12);
+        --alert-border: rgba(249, 115, 22, 0.25);
+        --alert-text: #FDBA74;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.5);
+      }
+    }
+
+    [data-theme="dark"] {
+      --bg: #0F1520;
+      --surface: #171F2C;
+      --text: #E6EAF0;
+      --muted: #8B96A5;
+      --border: #2A3444;
+      --alert-bg: rgba(249, 115, 22, 0.12);
+      --alert-border: rgba(249, 115, 22, 0.25);
+      --alert-text: #FDBA74;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="light"] {
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --text: #1E293B;
+      --muted: #64748B;
+      --border: #E2E8F0;
+      --alert-bg: #FFF7ED;
+      --alert-border: #FFEDD5;
+      --alert-text: #9A3412;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    h1, h2, h3, .font-heading {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .app-viewport {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+      background-color: var(--bg);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+      box-shadow: 0 0 40px rgba(0,0,0,0.06);
+    }
+
+    /* 1. TOP BAR */
+    .top-bar {
+      background: linear-gradient(145deg, #1E3A5F 0%, #152A45 100%);
+      color: #FFFFFF;
+      padding: 24px 20px 52px 20px;
+      border-bottom-left-radius: 24px;
+      border-bottom-right-radius: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .top-bar::after {
+      content: '';
+      position: absolute;
+      top: -30%;
+      right: -20%;
+      width: 240px;
+      height: 240px;
+      background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, rgba(30, 58, 95, 0) 70%);
+      pointer-events: none;
+    }
+
+    .top-bar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .greeting-text {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .theme-toggle-btn {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #FFFFFF;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 15px;
+      transition: background 0.2s;
+    }
+
+    .theme-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .vehicle-card-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .plate-chip {
+      background: #FFFFFF;
+      color: #1E3A5F;
+      font-family: 'Space Grotesk', monospace, monospace;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .vehicle-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .checkin-date {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* MAIN CONTENT */
+    .content-stream {
+      padding: 0 16px 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* 2. STATUS CARD */
+    .status-card {
+      background: var(--surface);
+      border-radius: var(--card-radius);
+      padding: 18px 18px 20px 18px;
+      margin-top: -34px;
+      position: relative;
+      z-index: 10;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+    }
+
+    .status-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .ticket-meta {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 11px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--status-amber);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .status-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--status-amber);
+      animation: pulseDot 1.8s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* 5-step horizontal progress track */
+    .progress-track {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: relative;
+      padding-top: 6px;
+    }
+
+    .progress-line-bg {
+      position: absolute;
+      top: 15px;
+      left: 20px;
+      right: 20px;
+      height: 3px;
+      background: var(--border);
+      z-index: 1;
+    }
+
+    .progress-line-fill {
+      position: absolute;
+      top: 15px;
+      left: 20px;
+      width: 50%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--status-green) 0%, var(--status-amber) 100%);
+      z-index: 2;
+    }
+
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 3;
+      width: 58px;
+    }
+
+    .step-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 2.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      transition: all 0.25s ease;
+    }
+
+    .step-item.completed .step-dot {
+      background: var(--status-green);
+      border-color: var(--status-green);
+      color: #FFFFFF;
+    }
+
+    .step-item.active .step-dot {
+      width: 26px;
+      height: 26px;
+      margin-top: -3px;
+      margin-bottom: 3px;
+      background: var(--status-amber);
+      border-color: #FFFFFF;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35);
+      color: #FFFFFF;
+    }
+
+    .step-item.future .step-dot {
+      background: var(--bg);
+      border-color: var(--status-gray);
+      color: var(--status-gray);
+    }
+
+    .step-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .step-item.active .step-label {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .step-item.completed .step-label {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* 3. ALERT BANNER */
+    .alert-banner {
+      background: var(--alert-bg);
+      border: 1px solid var(--alert-border);
+      border-radius: var(--card-radius);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .alert-icon-box {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800;
+      font-size: 17px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--alert-text);
+      margin-bottom: 1px;
+    }
+
+    .alert-subtext {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* SECTION HEADERS */
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-counter {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(30, 58, 95, 0.08);
+      color: var(--primary);
+    }
+
+    [data-theme="dark"] .section-counter {
+      background: rgba(255, 255, 255, 0.1);
+      color: #93C5FD;
+    }
+
+    /* 4. "WHAT WE FOUND" CARDS */
+    .finding-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+
+    .finding-card.decided {
+      opacity: 0.82;
+    }
+
+    .finding-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+
+    .finding-title-group {
+      flex: 1;
+      padding-right: 12px;
+    }
+
+    .finding-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .finding-type-chip {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-top: 2px;
+      display: inline-block;
+    }
+
+    .finding-price {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .finding-desc {
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .finding-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-approve {
+      flex: 1;
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-approve:hover {
+      background: #152A45;
+    }
+
+    .btn-decline {
+      flex: 1;
+      background: transparent;
+      color: var(--muted);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-decline:hover {
+      border-color: var(--muted);
+      color: var(--text);
+    }
+
+    .decision-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .decision-pill.approved {
+      background: rgba(34, 197, 94, 0.12);
+      color: var(--status-green);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .decision-pill.declined {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--status-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-undo {
+      font-size: 11px;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-left: auto;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* 5. REPAIR PROGRESS LIST */
+    .progress-list-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+    }
+
+    .progress-row:not(:last-child) {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .status-icon-circle {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .status-icon-circle.complete {
+      background: rgba(20, 184, 166, 0.15);
+      color: var(--status-teal);
+    }
+
+    .status-icon-circle.pending {
+      background: var(--border);
+      color: var(--muted);
+    }
+
+    .status-icon-circle.declined {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--status-red);
+    }
+
+    .progress-info {
+      flex: 1;
+    }
+
+    .progress-item-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .progress-subtext {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* 6. ESTIMATED INVOICE CARD */
+    .invoice-card {
+      background: linear-gradient(150deg, #1E3A5F 0%, #11233B 100%);
+      color: #FFFFFF;
+      border-radius: var(--card-radius);
+      padding: 20px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .invoice-card::before {
+      content: '';
+      position: absolute;
+      bottom: -40px;
+      right: -40px;
+      width: 140px;
+      height: 140px;
+      background: radial-gradient(circle, rgba(249, 115, 22, 0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .invoice-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .invoice-badge {
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.14);
+      padding: 2px 8px;
+      border-radius: 12px;
+      color: #E2E8F0;
+    }
+
+    .invoice-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      margin-bottom: 14px;
+    }
+
+    .invoice-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .invoice-line.tax {
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 12px;
+    }
+
+    .invoice-total-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.2);
+      margin: 6px 0 10px 0;
+    }
+
+    .invoice-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 14px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 18px;
+    }
+
+    .invoice-total-price {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .btn-pay {
+      width: 100%;
+      background: var(--accent);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 10px;
+      padding: 13px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-pay:hover {
+      background: var(--accent-hover);
+    }
+
+    /* 7. FIXED BOTTOM NAVIGATION BAR */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      height: calc(64px + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 100;
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.03);
+    }
+
+    .nav-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 500;
+      width: 60px;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+
+    .nav-tab.active {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    [data-theme="dark"] .nav-tab.active {
+      color: #60A5FA;
+    }
+
+    .nav-icon {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Modal Sheet for Payment */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-sheet {
+      width: 100%;
+      max-width: 480px;
+      background: var(--surface);
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      padding: 24px 20px calc(24px + env(safe-area-inset-bottom)) 20px;
+      border: 1px solid var(--border);
+      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-viewport">
+    
+    <!-- 1. TOP BAR -->
+    <header class="top-bar">
+      <div class="top-bar-header">
+        <h1 class="greeting-text">Hi, Alex</h1>
+        <button class="theme-toggle-btn" id="themeToggle" title="Toggle Light/Dark Mode" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="vehicle-card-row">
+        <span class="plate-chip">ABC-1234</span>
+        <span class="vehicle-title">2022 Toyota Camry XSE</span>
+      </div>
+
+      <div class="checkin-date">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        Checked in Today · 8:30 AM · Odometer 42,150 mi
+      </div>
+    </header>
+
+    <!-- CONTENT STREAM -->
+    <main class="content-stream">
+
+      <!-- 2. STATUS CARD (Floats up over top bar) -->
+      <section class="status-card">
+        <div class="status-header">
+          <span class="ticket-meta">TICKET #TK-2026-0001</span>
+          <span class="status-badge">Awaiting your approval</span>
+        </div>
+
+        <!-- 5-step horizontal progress track -->
+        <div class="progress-track">
+          <div class="progress-line-bg"></div>
+          <div class="progress-line-fill"></div>
+
+          <!-- Step 1: In (Completed) -->
+          <div class="step-item completed">
+            <div class="step-dot">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <span class="step-label">In</span>
+          </div>
+
+          <!-- Step 2: Inspect (Completed) -->
+          <div class="step-item completed">
+            <div class="step-dot">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <span class="step-label">Inspect</span>
+          </div>
+
+          <!-- Step 3: Approve (Active, Amber, larger) -->
+          <div class="step-item active">
+            <div class="step-dot">3</div>
+            <span class="step-label">Approve</span>
+          </div>
+
+          <!-- Step 4: Repair (Future, Gray) -->
+          <div class="step-item future">
+            <div class="step-dot">4</div>
+            <span class="step-label">Repair</span>
+          </div>
+
+          <!-- Step 5: Pickup (Future, Gray) -->
+          <div class="step-item future">
+            <div class="step-dot">5</div>
+            <span class="step-label">Pickup</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. ALERT BANNER -->
+      <aside class="alert-banner" id="alertBanner">
+        <div class="alert-icon-box">!</div>
+        <div class="alert-content">
+          <div class="alert-title" id="alertTitle">2 items need your decision</div>
+          <div class="alert-subtext">Technicians are paused until you review recommendations below.</div>
+        </div>
+      </aside>
+
+      <!-- 4. "WHAT WE FOUND" SECTION -->
+      <section>
+        <div class="section-title">
+          <span>What we found</span>
+          <span class="section-counter" id="findingsCounter">2 recommendations</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+
+          <!-- Item 1: Front Ceramic Brake Pads -->
+          <article class="finding-card" id="card-1">
+            <div class="finding-header">
+              <div class="finding-title-group">
+                <h3 class="finding-name">Front Ceramic Brake Pads</h3>
+                <span class="finding-type-chip">Part · Safety Critical</span>
+              </div>
+              <div class="finding-price">$79.99</div>
+            </div>
+            <p class="finding-desc">Brake pads are worn down to 2mm (safety limit is 3mm) and causing front vibration during deceleration.</p>
+            <div class="finding-actions" id="actions-1">
+              <button class="btn-approve" onclick="decideItem(1, true, 79.99, 'Front Ceramic Brake Pads')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Approve
+              </button>
+              <button class="btn-decline" onclick="decideItem(1, false, 79.99, 'Front Ceramic Brake Pads')">Decline</button>
+            </div>
+          </article>
+
+          <!-- Item 2: Front Caliper Servicing & Labor -->
+          <article class="finding-card" id="card-2">
+            <div class="finding-header">
+              <div class="finding-title-group">
+                <h3 class="finding-name">Brake Caliper Servicing & Labor</h3>
+                <span class="finding-type-chip">Labor · 1.5 hrs</span>
+              </div>
+              <div class="finding-price">$135.00</div>
+            </div>
+            <p class="finding-desc">Disassembly, slide pin cleaning, synthetic caliper lubrication, and rotor runout check to ensure even brake wear.</p>
+            <div class="finding-actions" id="actions-2">
+              <button class="btn-approve" onclick="decideItem(2, true, 135.00, 'Brake Caliper Servicing & Labor')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Approve
+              </button>
+              <button class="btn-decline" onclick="decideItem(2, false, 135.00, 'Brake Caliper Servicing & Labor')">Decline</button>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- 5. "REPAIR PROGRESS" SECTION -->
+      <section>
+        <div class="section-title">
+          <span>Repair progress</span>
+        </div>
+
+        <div class="progress-list-card" style="margin-top: 10px;">
+          <!-- Item A: Pre-approved Oil Change -->
+          <div class="progress-row">
+            <div class="status-icon-circle complete">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="progress-info">
+              <div class="progress-item-title">Full Synthetic Oil & Filter Service</div>
+              <div class="progress-subtext">Completed · 10:40 AM</div>
+            </div>
+          </div>
+
+          <!-- Dynamic Progress Items (linked to items 1 & 2) -->
+          <div class="progress-row" id="progress-item-1">
+            <div class="status-icon-circle pending" id="progress-icon-1">
+              <svg width="8" height="8" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="currentColor"></circle>
+              </svg>
+            </div>
+            <div class="progress-info">
+              <div class="progress-item-title">Front Ceramic Brake Pads</div>
+              <div class="progress-subtext" id="progress-text-1">Waiting on your approval</div>
+            </div>
+          </div>
+
+          <div class="progress-row" id="progress-item-2">
+            <div class="status-icon-circle pending" id="progress-icon-2">
+              <svg width="8" height="8" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="currentColor"></circle>
+              </svg>
+            </div>
+            <div class="progress-info">
+              <div class="progress-item-title">Brake Caliper Servicing & Labor</div>
+              <div class="progress-subtext" id="progress-text-2">Waiting on your approval</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. "ESTIMATED INVOICE" CARD -->
+      <section class="invoice-card">
+        <div class="invoice-header">
+          <h3 class="invoice-title">Estimated invoice</h3>
+          <span class="invoice-badge">Real-time estimate</span>
+        </div>
+
+        <div class="invoice-rows" id="invoiceRows">
+          <div class="invoice-line">
+            <span>Synthetic Oil & Filter (Pre-authorized)</span>
+            <span>$45.00</span>
+          </div>
+        </div>
+
+        <div class="invoice-line tax">
+          <span>Estimated Sales Tax (7.0%)</span>
+          <span id="taxAmount">$3.15</span>
+        </div>
+
+        <div class="invoice-total-divider"></div>
+
+        <div class="invoice-total-row">
+          <span>Total Balance</span>
+          <span class="invoice-total-price" id="invoiceTotal">$48.15</span>
+        </div>
+
+        <button class="btn-pay" onclick="openPaymentModal()">
+          <span>View & pay when ready</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </section>
+
+    </main>
+
+    <!-- 7. FIXED BOTTOM NAVIGATION BAR -->
+    <nav class="bottom-nav">
+      <a href="#tickets" class="nav-tab active">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+        </div>
+        <span>Tickets</span>
+      </a>
+
+      <a href="#vehicles" class="nav-tab" onclick="switchNav(this)">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
+            <circle cx="7" cy="17" r="2"></circle>
+            <path d="M9 17h6"></path>
+            <circle cx="17" cy="17" r="2"></circle>
+          </svg>
+        </div>
+        <span>Vehicles</span>
+      </a>
+
+      <a href="#updates" class="nav-tab" onclick="switchNav(this)">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </div>
+        <span>Updates</span>
+      </a>
+
+      <a href="#account" class="nav-tab" onclick="switchNav(this)">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <span>Account</span>
+      </a>
+    </nav>
+
+    <!-- Payment Confirmation Modal -->
+    <div class="modal-overlay" id="payModal" onclick="closeModalOnOverlay(event)">
+      <div class="modal-sheet">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h2 style="font-size: 18px; font-weight: 700;">Checkout & Payment</h2>
+          <button onclick="closePaymentModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted);">&times;</button>
+        </div>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">
+          Choose your payment method to settle the current approved balance.
+        </p>
+
+        <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+            <span>Current Approved Balance:</span>
+            <span style="font-weight: 700; color: var(--primary); font-size: 16px;" id="modalTotal">$48.15</span>
+          </div>
+          <div style="font-size: 11px; color: var(--muted);">Includes state taxes & shop disposal supplies.</div>
+        </div>
+
+        <button class="btn-pay" onclick="completePaymentSimulation()">
+          Confirm Payment & Authorize Checkout
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const baseItems = {
+      base: 45.00,
+      taxRate: 0.07
+    };
+
+    const decisions = {
+      1: null,
+      2: null
+    };
+
+    const itemDetails = {
+      1: { name: 'Front Ceramic Brake Pads', price: 79.99 },
+      2: { name: 'Brake Caliper Servicing & Labor', price: 135.00 }
+    };
+
+    function decideItem(id, isApproved, price, name) {
+      decisions[id] = isApproved;
+
+      const card = document.getElementById(`card-${id}`);
+      const actions = document.getElementById(`actions-${id}`);
+      const progressIcon = document.getElementById(`progress-icon-${id}`);
+      const progressText = document.getElementById(`progress-text-${id}`);
+
+      card.classList.add('decided');
+
+      if (isApproved) {
+        actions.innerHTML = `
+          <div class="decision-pill approved">
+            <span>✓</span>
+            <span>You approved this</span>
+          </div>
+          <button class="btn-undo" onclick="undoDecision(${id})">Change</button>
+        `;
+        progressIcon.className = 'status-icon-circle complete';
+        progressIcon.innerHTML = `
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        `;
+        progressText.textContent = 'Approved · Scheduled with Lead Tech';
+      } else {
+        actions.innerHTML = `
+          <div class="decision-pill declined">
+            <span>✕</span>
+            <span>You declined this</span>
+          </div>
+          <button class="btn-undo" onclick="undoDecision(${id})">Change</button>
+        `;
+        progressIcon.className = 'status-icon-circle declined';
+        progressIcon.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        `;
+        progressText.textContent = 'Declined by customer';
+      }
+
+      updateInvoice();
+      updateAlertBanner();
+    }
+
+    function undoDecision(id) {
+      decisions[id] = null;
+      const card = document.getElementById(`card-${id}`);
+      const actions = document.getElementById(`actions-${id}`);
+      const progressIcon = document.getElementById(`progress-icon-${id}`);
+      const progressText = document.getElementById(`progress-text-${id}`);
+
+      card.classList.remove('decided');
+
+      const item = itemDetails[id];
+      actions.innerHTML = `
+        <button class="btn-approve" onclick="decideItem(${id}, true, ${item.price}, '${item.name}')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Approve
+        </button>
+        <button class="btn-decline" onclick="decideItem(${id}, false, ${item.price}, '${item.name}')">Decline</button>
+      `;
+
+      progressIcon.className = 'status-icon-circle pending';
+      progressIcon.innerHTML = `
+        <svg width="8" height="8" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="45" fill="currentColor"></circle>
+        </svg>
+      `;
+      progressText.textContent = 'Waiting on your approval';
+
+      updateInvoice();
+      updateAlertBanner();
+    }
+
+    function updateInvoice() {
+      const invoiceRows = document.getElementById('invoiceRows');
+      let subtotal = baseItems.base;
+
+      let html = `
+        <div class="invoice-line">
+          <span>Synthetic Oil & Filter (Pre-authorized)</span>
+          <span>$45.00</span>
+        </div>
+      `;
+
+      for (const [id, approved] of Object.entries(decisions)) {
+        if (approved === true) {
+          const item = itemDetails[id];
+          subtotal += item.price;
+          html += `
+            <div class="invoice-line">
+              <span>${item.name}</span>
+              <span>$${item.price.toFixed(2)}</span>
+            </div>
+          `;
+        }
+      }
+
+      invoiceRows.innerHTML = html;
+
+      const tax = subtotal * baseItems.taxRate;
+      const total = subtotal + tax;
+
+      document.getElementById('taxAmount').textContent = `$${tax.toFixed(2)}`;
+      document.getElementById('invoiceTotal').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('modalTotal').textContent = `$${total.toFixed(2)}`;
+    }
+
+    function updateAlertBanner() {
+      const undecidedCount = Object.values(decisions).filter(v => v === null).length;
+      const alertBanner = document.getElementById('alertBanner');
+      const alertTitle = document.getElementById('alertTitle');
+      const findingsCounter = document.getElementById('findingsCounter');
+
+      if (undecidedCount === 0) {
+        alertBanner.style.background = 'rgba(34, 197, 94, 0.12)';
+        alertBanner.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+        alertBanner.querySelector('.alert-icon-box').style.background = 'var(--status-green)';
+        alertBanner.querySelector('.alert-icon-box').textContent = '✓';
+        alertTitle.style.color = 'var(--status-green)';
+        alertTitle.textContent = 'All recommendations decided!';
+        alertBanner.querySelector('.alert-subtext').textContent = 'Your mechanic has been authorized to proceed with repairs.';
+        findingsCounter.textContent = 'All Decided';
+      } else {
+        alertBanner.style.background = 'var(--alert-bg)';
+        alertBanner.style.borderColor = 'var(--alert-border)';
+        alertBanner.querySelector('.alert-icon-box').style.background = 'var(--accent)';
+        alertBanner.querySelector('.alert-icon-box').textContent = '!';
+        alertTitle.style.color = 'var(--alert-text)';
+        alertTitle.textContent = `${undecidedCount} item${undecidedCount > 1 ? 's' : ''} need your decision`;
+        alertBanner.querySelector('.alert-subtext').textContent = 'Technicians are paused until you review recommendations below.';
+        findingsCounter.textContent = `${undecidedCount} pending`;
+      }
+    }
+
+    const themeBtn = document.getElementById('themeToggle');
+    let currentTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+    themeBtn.addEventListener('click', () => {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', currentTheme);
+      themeBtn.innerHTML = currentTheme === 'dark' 
+        ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`
+        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+    });
+
+    function openPaymentModal() {
+      document.getElementById('payModal').style.display = 'flex';
+    }
+
+    function closePaymentModal() {
+      document.getElementById('payModal').style.display = 'none';
+    }
+
+    function closeModalOnOverlay(e) {
+      if (e.target.id === 'payModal') {
+        closePaymentModal();
+      }
+    }
+
+    function completePaymentSimulation() {
+      alert('Thank you! Payment pre-authorization recorded. You will be notified when your vehicle is ready for pickup.');
+      closePaymentModal();
+    }
+
+    function switchNav(el) {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+    }
+  </script>
+</body>
+</html>
