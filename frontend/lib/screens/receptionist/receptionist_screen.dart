@@ -81,15 +81,7 @@ class _ReceptionistScreenState extends State<ReceptionistScreen> {
         : allTickets.where((t) => t.currentStatus == _filter).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Receptionist Desk & Cashier'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ticketProvider.fetchTickets(),
-          ),
-        ],
-      ),
+      backgroundColor: AppColors.background,
       body: RefreshIndicator(
         onRefresh: () => ticketProvider.fetchTickets(),
         child: SingleChildScrollView(

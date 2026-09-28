@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../models/user_model.dart';
@@ -93,111 +94,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Ticker
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFF0F172A), // Deep Slate
-                Color(0xFF1E3A5F), // Deep Steel Blue
-                Color(0xFF1E293B), // Dark Slate
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border(
-              bottom: BorderSide(color: Color(0xFF334155), width: 1),
-            ),
-          ),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF6366F1).withValues(alpha: 0.4),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.admin_panel_settings_rounded, size: 18, color: Colors.white),
-            ),
-            const SizedBox(width: 12),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'ADMIN OPERATIONS',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      'Financial & Workshop Intelligence Console',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 14),
-            child: Tooltip(
-              message: 'Refresh Console Data',
-              child: InkWell(
-                onTap: _loadAllData,
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                  ),
-                  child: RotationTransition(
-                    turns: Tween(begin: 0.0, end: 1.0).animate(
-                      CurvedAnimation(parent: _refreshAnimController, curve: Curves.easeInOutCubic),
-                    ),
-                    child: const Icon(Icons.refresh_rounded, size: 18, color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(62),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      backgroundColor: AppColors.background,
+      body: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.85),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
             ),
             child: TabBar(
               controller: _tabController,
@@ -206,30 +112,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Ticker
               dividerColor: Colors.transparent,
               indicatorSize: TabBarIndicatorSize.tab,
               indicator: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFFF97316), // Safety Orange
-                    Color(0xFFEA580C), // Deep Glow Amber
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFF97316).withValues(alpha: 0.45),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(8),
+                color: AppColors.primary,
               ),
               labelColor: Colors.white,
-              unselectedLabelColor: Colors.white60,
-              labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.4),
-              unselectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              unselectedLabelColor: AppColors.textSecondary,
+              labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold),
+              unselectedLabelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500),
               tabs: const [
                 Tab(
-                  height: 40,
+                  height: 38,
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10),
                     child: Row(
@@ -243,7 +135,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Ticker
                   ),
                 ),
                 Tab(
-                  height: 40,
+                  height: 38,
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10),
                     child: Row(
@@ -257,7 +149,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Ticker
                   ),
                 ),
                 Tab(
-                  height: 40,
+                  height: 38,
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10),
                     child: Row(
@@ -271,7 +163,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Ticker
                   ),
                 ),
                 Tab(
-                  height: 40,
+                  height: 38,
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10),
                     child: Row(
@@ -287,15 +179,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Ticker
               ],
             ),
           ),
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildAnalyticsTab(),
-          _buildStaffTab(),
-          _buildInventoryTab(),
-          _buildAuditTab(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildAnalyticsTab(),
+                _buildStaffTab(),
+                _buildInventoryTab(),
+                _buildAuditTab(),
+              ],
+            ),
+          ),
         ],
       ),
     );

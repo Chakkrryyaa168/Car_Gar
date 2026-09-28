@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_animations.dart';
 
-class ProgressStepper extends StatelessWidget {
+class ProgressStepper extends StatefulWidget {
   final String currentStatus;
 
   const ProgressStepper({super.key, required this.currentStatus});
+
+  @override
+  State<ProgressStepper> createState() => _ProgressStepperState();
+}
+
+class _ProgressStepperState extends State<ProgressStepper> with TickerProviderStateMixin {
+  late AnimationController _lineController;
+  late Animation<double> _lineAnimation;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
 
   static const List<Map<String, String>> _steps = [
     {'status': 'CHECKED_IN', 'title': 'Check-In'},
@@ -18,7 +29,7 @@ class ProgressStepper extends StatelessWidget {
   ];
 
   int get _currentIndex {
-    switch (currentStatus.toUpperCase()) {
+    switch (widget.currentStatus.toUpperCase()) {
       case 'CHECKED_IN':
         return 0;
       case 'INSPECTION_PENDING':
@@ -40,18 +51,60 @@ class ProgressStepper extends StatelessWidget {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Smooth left-to-right line fill over 700ms on mount
+    _lineController = AnimationController(
+      vsync: this,
+      duration: AppAnimations.durSlow,
+    );
+    _lineAnimation = CurvedAnimation(
+      parent: _lineController,
+      curve: AppAnimations.ease,
+    );
+    _lineController.forward();
+
+    // Soft 2.4s calm pulsing halo for active step dot
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: AppAnimations.durPulseLoop,
+    )..repeat(reverse: true);
+
+    _pulseAnimation = CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void didUpdateWidget(ProgressStepper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentStatus != widget.currentStatus) {
+      _lineController.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _lineController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final activeIndex = _currentIndex;
+    final reducedMotion = AppAnimations.isReducedMotion(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       decoration: BoxDecoration(
         color: AppColors.surface, // #FFFFFF
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border), // #E8DAD8
+        border: Border.all(color: AppColors.border), // #E4DED0
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1A1D29).withValues(alpha: 0.03),
+            color: const Color(0xFF2B2F2C).withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -75,7 +128,7 @@ class ProgressStepper extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceElevated, // #FDF6F5
+                  color: AppColors.surfaceElevated,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.border),
                 ),
@@ -84,7 +137,7 @@ class ProgressStepper extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primary, // #1A1D29
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -101,9 +154,9 @@ class ProgressStepper extends StatelessWidget {
                     final isPassed = index < activeIndex;
                     final isCurrent = index == activeIndex;
 
-                    // Active dot: solid navy (#1A1D29) and slightly larger (32px)
-                    // Completed dot: navy at full opacity (#1A1D29, 26px) with cream check
-                    // Pending dot: faint silver outline only (#E8DAD8, 26px)
+                    // Completed = solid sage (26px) with white check
+                    // Active = slightly larger sage (32px) with soft sage halo
+                    // Pending = faint outline in the border color (#E4DED0, 26px)
                     final double dotSize = isCurrent ? 32.0 : 26.0;
 
                     return Row(
@@ -112,35 +165,56 @@ class ProgressStepper extends StatelessWidget {
                         // Circle Indicator
                         Column(
                           children: [
-                            Container(
-                              width: dotSize,
-                              height: dotSize,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isCurrent
-                                    ? AppColors.primary // Solid navy #1A1D29
-                                    : isPassed
-                                        ? AppColors.primary // Navy at full opacity #1A1D29
-                                        : Colors.transparent, // Faint silver outline only
-                                border: Border.all(
-                                  color: isCurrent
-                                      ? AppColors.primary
-                                      : isPassed
+                            AnimatedBuilder(
+                              animation: _pulseAnimation,
+                              builder: (context, child) {
+                                final haloSpread = (reducedMotion || !isCurrent)
+                                    ? 3.0
+                                    : (2.0 + (_pulseAnimation.value * 2.5));
+                                final haloBlur = (reducedMotion || !isCurrent)
+                                    ? 8.0
+                                    : (6.0 + (_pulseAnimation.value * 4.0));
+                                final haloAlpha = (reducedMotion || !isCurrent)
+                                    ? 0.35
+                                    : (0.18 + (_pulseAnimation.value * 0.22));
+
+                                return Container(
+                                  width: dotSize,
+                                  height: dotSize,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: (isCurrent || isPassed)
+                                        ? AppColors.primary
+                                        : Colors.transparent,
+                                    border: Border.all(
+                                      color: (isCurrent || isPassed)
                                           ? AppColors.primary
-                                          : AppColors.border, // #E8DAD8
-                                  width: isCurrent ? 2 : 1.5,
-                                ),
-                              ),
+                                          : AppColors.border,
+                                      width: isCurrent ? 2 : 1.5,
+                                    ),
+                                    boxShadow: isCurrent
+                                        ? [
+                                            BoxShadow(
+                                              color: AppColors.primary.withValues(alpha: haloAlpha),
+                                              blurRadius: haloBlur,
+                                              spreadRadius: haloSpread,
+                                            ),
+                                          ]
+                                        : null,
+                                  ),
+                                  child: child,
+                                );
+                              },
                               child: Center(
                                 child: isPassed
-                                    ? const Icon(Icons.check, size: 14, color: AppColors.background) // Cream check
+                                    ? _buildCheckIcon(reducedMotion)
                                     : Text(
                                         '${index + 1}',
                                         style: GoogleFonts.inter(
                                           fontSize: isCurrent ? 12 : 10,
                                           fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w500,
                                           color: isCurrent
-                                              ? AppColors.background // Cream on navy
+                                              ? Colors.white
                                               : AppColors.textSecondary,
                                         ),
                                       ),
@@ -154,7 +228,9 @@ class ProgressStepper extends StatelessWidget {
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
-                                  fontWeight: isCurrent ? FontWeight.w700 : (isPassed ? FontWeight.w600 : FontWeight.w400),
+                                  fontWeight: isCurrent
+                                      ? FontWeight.w700
+                                      : (isPassed ? FontWeight.w600 : FontWeight.w400),
                                   color: isCurrent
                                       ? AppColors.primary
                                       : isPassed
@@ -167,16 +243,9 @@ class ProgressStepper extends StatelessWidget {
                             ),
                           ],
                         ),
-                        // Connecting line between steps
+                        // Connecting line between steps: fills left to right
                         if (index < _steps.length - 1)
-                          Container(
-                            width: 24,
-                            height: 2,
-                            margin: const EdgeInsets.only(bottom: 24),
-                            color: index < activeIndex
-                                ? AppColors.primary // Solid navy line
-                                : AppColors.border, // Faint soft warm divider #E8DAD8
-                          ),
+                          _buildConnectingLine(index, activeIndex, reducedMotion),
                       ],
                     );
                   }),
@@ -186,6 +255,71 @@ class ProgressStepper extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCheckIcon(bool reducedMotion) {
+    if (reducedMotion) {
+      return const Icon(Icons.check, size: 14, color: Colors.white);
+    }
+    return AnimatedBuilder(
+      animation: _lineAnimation,
+      builder: (context, _) {
+        final scale = 0.75 + (0.25 * _lineAnimation.value);
+        return Transform.scale(
+          scale: scale,
+          child: const Icon(Icons.check, size: 14, color: Colors.white),
+        );
+      },
+    );
+  }
+
+  Widget _buildConnectingLine(int index, int activeIndex, bool reducedMotion) {
+    final bool isLineCompleted = index < activeIndex;
+    if (!isLineCompleted) {
+      return Container(
+        width: 24,
+        height: 2,
+        margin: const EdgeInsets.only(bottom: 24),
+        color: AppColors.border,
+      );
+    }
+
+    if (reducedMotion || activeIndex == 0) {
+      return Container(
+        width: 24,
+        height: 2,
+        margin: const EdgeInsets.only(bottom: 24),
+        color: AppColors.primary,
+      );
+    }
+
+    // Segment interval based on activeIndex
+    final double startInterval = (index / activeIndex).clamp(0.0, 1.0);
+    final double endInterval = ((index + 1) / activeIndex).clamp(0.0, 1.0);
+
+    return AnimatedBuilder(
+      animation: _lineAnimation,
+      builder: (context, _) {
+        final animVal = _lineAnimation.value;
+        final double fraction = (endInterval > startInterval)
+            ? ((animVal - startInterval) / (endInterval - startInterval)).clamp(0.0, 1.0)
+            : 1.0;
+
+        return Container(
+          width: 24,
+          height: 2,
+          margin: const EdgeInsets.only(bottom: 24),
+          color: AppColors.border,
+          alignment: Alignment.centerLeft,
+          child: FractionallySizedBox(
+            widthFactor: fraction,
+            child: Container(
+              color: AppColors.primary,
+            ),
+          ),
+        );
+      },
     );
   }
 }

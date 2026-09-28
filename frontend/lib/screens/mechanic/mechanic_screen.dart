@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../providers/ticket_provider.dart';
@@ -50,109 +51,115 @@ class _MechanicScreenState extends State<MechanicScreen> {
         final hasSelectedTicket = _selectedTicketId != null;
 
         return Scaffold(
-          appBar: AppBar(
-            elevation: 0,
-            leading: hasSelectedTicket
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-                    tooltip: 'Back to Workshop Queue',
-                    onPressed: () {
-                      setState(() => _selectedTicketId = null);
-                    },
-                  )
-                : null,
-            title: hasSelectedTicket && provider.selectedTicket != null
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+          backgroundColor: AppColors.background,
+          body: Column(
+            children: [
+              if (hasSelectedTicket)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: const BoxDecoration(
+                    color: AppColors.surface,
+                    border: Border(bottom: BorderSide(color: AppColors.border)),
+                  ),
+                  child: Row(
                     children: [
-                      Text(
-                        provider.selectedTicket!.vehicleInfo ?? 'Vehicle Ticket',
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        'Ticket #${provider.selectedTicket!.ticketNumber}',
-                        style: const TextStyle(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.normal),
-                      ),
-                    ],
-                  )
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF97316).withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFF97316).withValues(alpha: 0.5)),
+                      InkWell(
+                        onTap: () => setState(() => _selectedTicketId = null),
+                        customBorder: const CircleBorder(),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: AppColors.background,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.border,
+                              width: 1.0,
+                            ),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: 13,
+                              color: AppColors.primary,
+                            ),
+                          ),
                         ),
-                        child: const Icon(Icons.build_circle_rounded, size: 16, color: Color(0xFFF97316)),
-                      ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'Workshop Queue',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(12),
+                      TextButton(
+                        onPressed: () => setState(() => _selectedTicketId = null),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                          visualDensity: VisualDensity.compact,
                         ),
                         child: Text(
-                          '${activeTickets.length} Jobs',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                          'Back to Queue',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 12),
+                      if (provider.selectedTicket != null)
+                        Expanded(
+                          child: Text(
+                            '${provider.selectedTicket!.vehicleInfo ?? "Vehicle"} • #${provider.selectedTicket!.ticketNumber}',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                     ],
                   ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                tooltip: 'Refresh Tickets',
-                onPressed: () => provider.fetchTickets(),
+                ),
+              Expanded(
+                child: hasSelectedTicket
+                    ? Row(
+                        children: [
+                          if (!isMobile && _isSidebarOpen)
+                            SizedBox(
+                              width: 320,
+                              child: _buildQueueSidebar(context, activeTickets, provider, isDrawer: false),
+                            ),
+                          Expanded(
+                            child: Consumer<TicketProvider>(
+                              builder: (context, tp, child) {
+                                final selected = tp.selectedTicket;
+                                if (tp.isLoading && selected == null) {
+                                  return const Center(child: CircularProgressIndicator());
+                                }
+                                if (selected == null) {
+                                  return Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Text('Unable to load ticket details.'),
+                                        const SizedBox(height: 12),
+                                        ElevatedButton(
+                                          onPressed: () => setState(() => _selectedTicketId = null),
+                                          child: const Text('Back to Workshop Queue'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                return _buildMechanicWorkspace(context, selected, tp, isMobile: isMobile);
+                              },
+                            ),
+                          ),
+                        ],
+                      )
+                    : _buildFullWorkshopQueue(context, activeTickets, provider),
               ),
             ],
           ),
-          body: hasSelectedTicket
-              ? Row(
-                  children: [
-                    if (!isMobile && _isSidebarOpen)
-                      SizedBox(
-                        width: 320,
-                        child: _buildQueueSidebar(context, activeTickets, provider, isDrawer: false),
-                      ),
-                    Expanded(
-                      child: Consumer<TicketProvider>(
-                        builder: (context, tp, child) {
-                          final selected = tp.selectedTicket;
-                          if (tp.isLoading && selected == null) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-                          if (selected == null) {
-                            return Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Text('Unable to load ticket details.'),
-                                  const SizedBox(height: 12),
-                                  ElevatedButton(
-                                    onPressed: () => setState(() => _selectedTicketId = null),
-                                    child: const Text('Back to Workshop Queue'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                          return _buildMechanicWorkspace(context, selected, tp, isMobile: isMobile);
-                        },
-                      ),
-                    ),
-                  ],
-                )
-              : _buildFullWorkshopQueue(context, activeTickets, provider),
         );
       },
     );
@@ -220,16 +227,16 @@ class _MechanicScreenState extends State<MechanicScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF1E3A5F), Color(0xFF2C5282)],
+                colors: [Color(0xFF5F7F6B), Color(0xFF4E6B59)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1E3A5F).withValues(alpha: 0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
+                  color: const Color(0xFF2B2F2C).withValues(alpha: 0.12),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -238,7 +245,7 @@ class _MechanicScreenState extends State<MechanicScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: Colors.white.withValues(alpha: 0.16),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.build_circle, color: Colors.white, size: 28),
@@ -248,14 +255,21 @@ class _MechanicScreenState extends State<MechanicScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Workshop Repair Queue',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        style: GoogleFonts.spaceGrotesk(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '${activeTickets.length} active service order${activeTickets.length == 1 ? '' : 's'} assigned to bay. Tap any vehicle to view details & execute work.',
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        style: GoogleFonts.inter(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -563,17 +577,48 @@ class _MechanicScreenState extends State<MechanicScreen> {
           if (isMobile)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(40),
-                  side: const BorderSide(color: AppColors.primary),
-                ),
-                icon: const Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
-                label: const Text(
-                  'Back to Workshop Queue',
-                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-                ),
-                onPressed: () => setState(() => _selectedTicketId = null),
+              child: Row(
+                children: [
+                  InkWell(
+                    onTap: () => setState(() => _selectedTicketId = null),
+                    customBorder: const CircleBorder(),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.border,
+                          width: 1.0,
+                        ),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 14,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  TextButton(
+                    onPressed: () => setState(() => _selectedTicketId = null),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: EdgeInsets.zero,
+                    ),
+                    child: Text(
+                      'Back to Workshop Queue',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           // Vehicle Header & Status Action

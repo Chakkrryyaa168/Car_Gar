@@ -204,7 +204,7 @@ class PhotoGalleryModal extends StatelessWidget {
                           photo.url,
                           fit: BoxFit.cover,
                           errorBuilder: (ctx, err, stack) => Container(
-                            color: AppColors.surfaceMuted,
+                            color: AppColors.surfaceElevated,
                             child: const Icon(Icons.broken_image, color: AppColors.textSecondary),
                           ),
                         ),
@@ -214,7 +214,7 @@ class PhotoGalleryModal extends StatelessWidget {
                           right: 0,
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            color: AppColors.primary.withValues(alpha: 0.8),
+                            color: AppColors.charcoal.withValues(alpha: 0.85),
                             child: Text(
                               photo.caption.isNotEmpty ? photo.caption : photo.stageTitle,
                               maxLines: 2,

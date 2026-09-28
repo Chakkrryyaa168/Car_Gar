@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/photo_model.dart';
 import '../theme/app_colors.dart';
 
@@ -42,7 +43,7 @@ class PhotoViewDialog extends StatelessWidget {
             maxHeight: size.height * 0.9,
           ),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
+            color: AppColors.charcoal, // #2B2F2C
             borderRadius: BorderRadius.circular(16),
             boxShadow: const [
               BoxShadow(
@@ -59,7 +60,7 @@ class PhotoViewDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Color(0xFF334155))),
+                  border: Border(bottom: BorderSide(color: Color(0xFF3F4541))),
                 ),
                 child: Row(
                   children: [
@@ -93,7 +94,7 @@ class PhotoViewDialog extends StatelessWidget {
                     ),
                     if (onDelete != null)
                       IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                        icon: const Icon(Icons.delete_outline, color: AppColors.textSecondary),
                         tooltip: 'Delete Photo',
                         onPressed: () => _confirmDelete(context),
                       ),
@@ -123,7 +124,7 @@ class PhotoViewDialog extends StatelessWidget {
                             ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
                             : null;
                         return Center(
-                          child: CircularProgressIndicator(value: percent),
+                           child: CircularProgressIndicator(value: percent),
                         );
                       },
                       errorBuilder: (ctx, err, stack) => Padding(
@@ -150,7 +151,7 @@ class PhotoViewDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: const BoxDecoration(
-                  border: Border(top: BorderSide(color: Color(0xFF334155))),
+                  border: Border(top: BorderSide(color: Color(0xFF3F4541))),
                 ),
                 child: Row(
                   children: [
@@ -190,15 +191,29 @@ class PhotoViewDialog extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Photo?'),
-        content: const Text('Are you sure you want to permanently remove this photo documentation?'),
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: AppColors.border),
+        ),
+        title: Text(
+          'Delete Photo?',
+          style: GoogleFonts.spaceGrotesk(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Are you sure you want to permanently remove this photo documentation?',
+          style: GoogleFonts.inter(color: AppColors.textBody),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel', style: GoogleFonts.inter(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.charcoal,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               Navigator.pop(ctx); // Close confirmation
               Navigator.pop(context); // Close viewer
@@ -206,7 +221,7 @@ class PhotoViewDialog extends StatelessWidget {
                 await onDelete!();
               }
             },
-            child: const Text('Delete'),
+            child: Text('Delete', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
           ),
         ],
       ),

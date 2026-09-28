@@ -18,6 +18,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="A new Flutter project.">
 
   <!-- iOS meta tags & icons -->
@@ -31,6 +32,31 @@
 
   <title>frontend</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Car Garage Motion Foundation (Calm, Soft Ease-Out) -->
+  <style>
+    :root {
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --dur-fast: 180ms;
+      --dur-base: 350ms;
+      --dur-slow: 700ms;
+      --dur-pulse: 2400ms;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      :root {
+        --dur-fast: 0ms;
+        --dur-base: 0ms;
+        --dur-slow: 0ms;
+        --dur-pulse: 0ms;
+      }
+      * {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+  </style>
 </head>
 <body>
   <!--

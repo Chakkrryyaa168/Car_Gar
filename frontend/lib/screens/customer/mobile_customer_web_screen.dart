@@ -134,11 +134,18 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF1E3A5F), Color(0xFF152A45)],
+          colors: [Color(0xFF5F7F6B), Color(0xFF4E6B59)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x1F2B2F2C),
+            blurRadius: 16,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       padding: const EdgeInsets.fromLTRB(20, 52, 20, 48),
       child: Column(
@@ -156,9 +163,24 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
                   letterSpacing: -0.5,
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-                onPressed: () => Navigator.maybePop(context),
+              InkWell(
+                onTap: () => Navigator.maybePop(context),
+                customBorder: const CircleBorder(),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.20),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 15),
+                  ),
+                ),
               ),
             ],
           ),
@@ -184,7 +206,7 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
                     fontFamily: 'monospace',
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
-                    color: Color(0xFF1E3A5F),
+                    color: Color(0xFF5F7F6B),
                     letterSpacing: 0.8,
                   ),
                 ),
@@ -712,14 +734,14 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1E3A5F), Color(0xFF11233B)],
+          colors: [Color(0xFF5F7F6B), Color(0xFF4E6B59)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1E3A5F).withValues(alpha: 0.25),
+            color: const Color(0xFF2B2F2C).withValues(alpha: 0.12),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),

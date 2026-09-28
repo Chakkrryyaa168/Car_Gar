@@ -6,7 +6,7 @@ import 'providers/auth_provider.dart';
 import 'providers/ticket_provider.dart';
 import 'providers/inventory_provider.dart';
 import 'theme/app_theme.dart';
-import 'widgets/app_shell.dart';
+import 'screens/splash/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +37,7 @@ class CarGarageApp extends StatelessWidget {
         title: 'Car Garage Management System',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        home: const AppShell(),
+        home: const SplashScreen(),
       ),
     );
   }

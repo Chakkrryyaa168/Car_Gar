@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/ticket_model.dart';
 import '../providers/ticket_provider.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_animations.dart';
 
 class ItemApprovalDialog extends StatefulWidget {
   final TicketModel ticket;
@@ -133,13 +134,19 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                   final isApproved = decision == 'APPROVED';
                   final isRejected = decision == 'REJECTED';
 
-                  return Container(
+                  return AnimatedContainer(
+                    duration: AppAnimations.durFast,
+                    curve: AppAnimations.ease,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isApproved ? AppColors.surfaceElevated : AppColors.surface,
+                      color: isApproved
+                          ? AppColors.surfaceElevated
+                          : (isRejected ? const Color(0xFFF1EDE4) : AppColors.surface),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isApproved ? AppColors.primary : AppColors.border,
+                        color: isApproved
+                            ? AppColors.primary
+                            : (isRejected ? AppColors.border.withValues(alpha: 0.6) : AppColors.border),
                         width: isApproved ? 1.5 : 1.0,
                       ),
                     ),
@@ -202,65 +209,80 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                         Row(
                           children: [
                             Expanded(
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isApproved ? AppColors.primary : AppColors.surface,
-                                  foregroundColor: isApproved ? AppColors.background : AppColors.textSecondary,
-                                  side: BorderSide(
-                                    color: isApproved ? AppColors.primary : AppColors.accent,
-                                    width: isApproved ? 1.5 : 1.0,
-                                  ),
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
-                                ),
-                                icon: Icon(
-                                  isApproved ? Icons.check_circle : Icons.check_circle_outline,
-                                  size: 16,
-                                  color: isApproved ? AppColors.background : AppColors.textSecondary,
-                                ),
-                                label: Text(
-                                  'Approve',
-                                  style: GoogleFonts.inter(
-                                    fontWeight: isApproved ? FontWeight.w700 : FontWeight.w600,
-                                  ),
-                                ),
+                              child: AppPressable(
                                 onPressed: () {
                                   setState(() {
                                     _decisions[item.id] = 'APPROVED';
                                   });
                                 },
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isApproved ? AppColors.primary : AppColors.surface,
+                                    foregroundColor: isApproved ? Colors.white : AppColors.textSecondary,
+                                    side: BorderSide(
+                                      color: isApproved ? AppColors.primary : AppColors.border,
+                                      width: isApproved ? 1.5 : 1.0,
+                                    ),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                  ),
+                                  icon: Icon(
+                                    isApproved ? Icons.check_circle : Icons.check_circle_outline,
+                                    size: 16,
+                                    color: isApproved ? Colors.white : AppColors.textSecondary,
+                                  ),
+                                  label: Text(
+                                    'Approve',
+                                    style: GoogleFonts.inter(
+                                      fontWeight: isApproved ? FontWeight.w700 : FontWeight.w600,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _decisions[item.id] = 'APPROVED';
+                                    });
+                                  },
+                                ),
                               ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              child: OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: isRejected ? AppColors.surfaceElevated : Colors.transparent,
-                                  foregroundColor: isRejected ? AppColors.primary : AppColors.textSecondary,
-                                  side: BorderSide(
-                                    color: isRejected ? AppColors.accent : AppColors.border,
-                                    width: isRejected ? 1.5 : 1.0,
-                                  ),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
-                                ),
-                                icon: Icon(
-                                  isRejected ? Icons.cancel : Icons.cancel_outlined,
-                                  size: 16,
-                                  color: isRejected ? AppColors.primary : AppColors.textSecondary,
-                                ),
-                                label: Text(
-                                  'Decline',
-                                  style: GoogleFonts.inter(
-                                    fontWeight: isRejected ? FontWeight.w700 : FontWeight.w600,
-                                  ),
-                                ),
+                              child: AppPressable(
                                 onPressed: () {
                                   setState(() {
                                     _decisions[item.id] = 'REJECTED';
                                   });
                                 },
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor: isRejected ? AppColors.surfaceElevated : Colors.transparent,
+                                    foregroundColor: isRejected ? AppColors.charcoal : AppColors.textSecondary,
+                                    side: BorderSide(
+                                      color: AppColors.border, // #E4DED0
+                                      width: isRejected ? 1.5 : 1.0,
+                                    ),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                  ),
+                                  icon: Icon(
+                                    isRejected ? Icons.cancel : Icons.cancel_outlined,
+                                    size: 16,
+                                    color: isRejected ? AppColors.charcoal : AppColors.textSecondary,
+                                  ),
+                                  label: Text(
+                                    'Decline',
+                                    style: GoogleFonts.inter(
+                                      fontWeight: isRejected ? FontWeight.w700 : FontWeight.w600,
+                                      color: isRejected ? AppColors.charcoal : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _decisions[item.id] = 'REJECTED';
+                                    });
+                                  },
+                                ),
                               ),
                             ),
                           ],
@@ -293,8 +315,8 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      Text(
-                        '\$${_estimatedTotal.toStringAsFixed(2)}',
+                      CountingAmountText(
+                        value: _estimatedTotal,
                         style: GoogleFonts.spaceGrotesk(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -304,40 +326,42 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary, // Solid Navy #1A1D29
-                        foregroundColor: AppColors.background, // Cream #F9EBEA
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      onPressed: () async {
-                        final approvals = _decisions.entries
-                            .map((e) => {'item_id': e.key, 'status': e.value})
-                            .toList();
+                  AppPressable(
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary, // Solid Sage #5F7F6B
+                          foregroundColor: Colors.white, // White text
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: () async {
+                          final approvals = _decisions.entries
+                              .map((e) => {'item_id': e.key, 'status': e.value})
+                              .toList();
 
-                        final provider = Provider.of<TicketProvider>(context, listen: false);
-                        Navigator.pop(context);
-                        await provider.batchApproveItems(widget.ticket.id, approvals);
+                          final provider = Provider.of<TicketProvider>(context, listen: false);
+                          Navigator.pop(context);
+                          await provider.batchApproveItems(widget.ticket.id, approvals);
 
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Repair approvals submitted. Work is now in progress!',
-                                style: GoogleFonts.inter(color: AppColors.background),
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Repair approvals submitted. Work is now in progress!',
+                                  style: GoogleFonts.inter(color: Colors.white),
+                                ),
+                                backgroundColor: AppColors.primary,
                               ),
-                              backgroundColor: AppColors.primary,
-                            ),
-                          );
-                        }
-                      },
-                      child: Text(
-                        'Confirm Decisions & Authorize Work',
-                        style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600),
+                            );
+                          }
+                        },
+                        child: Text(
+                          'Confirm Decisions & Authorize Work',
+                          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ),
                   ),

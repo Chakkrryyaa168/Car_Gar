@@ -5,6 +5,7 @@ import '../../models/ticket_model.dart';
 import '../../models/ticket_item_model.dart';
 import '../../providers/ticket_provider.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_animations.dart';
 import '../../widgets/status_badge.dart';
 import '../../widgets/progress_stepper.dart';
 import '../../widgets/photo_gallery_modal.dart';
@@ -50,21 +51,88 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
-            backgroundColor: AppColors.background,
+            backgroundColor: Colors.transparent,
             elevation: 0,
+            flexibleSpace: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF5F7F6B), Color(0xFF4E6B59)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(22),
+                  bottomRight: Radius.circular(22),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x1F2B2F2C),
+                    blurRadius: 16,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+            ),
+            leading: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: InkWell(
+                onTap: () => Navigator.maybePop(context),
+                customBorder: const CircleBorder(),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.20),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 15,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
             title: Text(
               ticket != null ? 'Live Tracker • ${ticket.ticketNumber}' : 'Live Ticket Tracker',
               style: GoogleFonts.spaceGrotesk(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: Colors.white,
               ),
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh, color: AppColors.primary),
-                tooltip: 'Refresh Ticket',
-                onPressed: () => provider.fetchTicketDetail(widget.ticketId),
+              Padding(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: InkWell(
+                  onTap: () => provider.fetchTicketDetail(widget.ticketId),
+                  customBorder: const CircleBorder(),
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.14),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.20),
+                        width: 1.0,
+                      ),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.refresh_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -86,33 +154,56 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // 1. Vehicle & Current Status Banner
-                            _buildVehicleHeaderCard(ticket),
+                            StaggeredFadeSlide(
+                              index: 0,
+                              child: _buildVehicleHeaderCard(ticket),
+                            ),
                             const SizedBox(height: 16),
 
                             // 2. Multi-Step Visual Progress Stepper
-                            ProgressStepper(currentStatus: ticket.currentStatus),
+                            StaggeredFadeSlide(
+                              index: 1,
+                              child: ProgressStepper(currentStatus: ticket.currentStatus),
+                            ),
                             const SizedBox(height: 16),
 
                             // 3. Customer Action Alert Banner (if awaiting approval)
-                            if (ticket.currentStatus == 'PENDING_CUSTOMER_APPROVAL')
-                              _buildPendingApprovalBanner(ticket),
+                            if (ticket.currentStatus == 'PENDING_CUSTOMER_APPROVAL') ...[
+                              StaggeredFadeSlide(
+                                index: 2,
+                                child: _buildPendingApprovalBanner(ticket),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
 
                             // 4. Live Repair Items Checklist
-                            _buildRepairChecklist(ticket),
+                            StaggeredFadeSlide(
+                              index: 3,
+                              child: _buildRepairChecklist(ticket),
+                            ),
                             const SizedBox(height: 16),
 
                             // 5. Photos & Visual Evidence Section
-                            _buildPhotoEvidenceCard(ticket),
+                            StaggeredFadeSlide(
+                              index: 4,
+                              child: _buildPhotoEvidenceCard(ticket),
+                            ),
                             const SizedBox(height: 16),
 
                             // 6. Dynamic Invoice Summary
                             if (ticket.invoice != null) ...[
-                              _buildInvoiceCard(ticket),
+                              StaggeredFadeSlide(
+                                index: 5,
+                                child: _buildInvoiceCard(ticket),
+                              ),
                               const SizedBox(height: 16),
                             ],
 
                             // 7. Status Timeline & Audit Log
-                            _buildTimelineCard(ticket),
+                            StaggeredFadeSlide(
+                              index: 6,
+                              child: _buildTimelineCard(ticket),
+                            ),
                           ],
                         ),
                       ),
@@ -396,19 +487,22 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary, // Solid Navy #1A1D29
-                foregroundColor: AppColors.background, // Cream #F9EBEA
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                elevation: 0,
-              ),
-              icon: const Icon(Icons.touch_app, size: 18, color: AppColors.background),
-              label: Text(
-                'Review & Authorize Repairs',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-              ),
+            child: AppPressable(
               onPressed: () => ItemApprovalDialog.show(context, ticket),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary, // Solid Sage #5F7F6B
+                  foregroundColor: Colors.white, // White text
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.touch_app, size: 18, color: Colors.white),
+                label: Text(
+                  'Review & Authorize Repairs',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                ),
+                onPressed: () => ItemApprovalDialog.show(context, ticket),
+              ),
             ),
           ),
         ],
@@ -532,17 +626,19 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                   final isPending = item.isPending;
                   final isApprovedDecision = (_itemDecisions[item.id] ?? (isPending ? 'APPROVED' : item.approvalStatus)) == 'APPROVED';
 
-                  return Container(
+                  return AnimatedContainer(
+                    duration: AppAnimations.durFast,
+                    curve: AppAnimations.ease,
                     decoration: BoxDecoration(
                       color: isPending
                           ? (isApprovedDecision
                               ? AppColors.surfaceElevated
-                              : AppColors.surface)
+                              : const Color(0xFFF1EDE4))
                           : AppColors.surface,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isPending
-                            ? (isApprovedDecision ? AppColors.primary : AppColors.border)
+                            ? (isApprovedDecision ? AppColors.primary : AppColors.border.withValues(alpha: 0.6))
                             : AppColors.border,
                         width: isPending && isApprovedDecision ? 1.2 : 1.0,
                       ),
@@ -565,7 +661,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                                   child: Checkbox(
                                     value: isApprovedDecision,
                                     activeColor: AppColors.primary,
-                                    checkColor: AppColors.background,
+                                    checkColor: Colors.white,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                                     onChanged: (bool? checked) {
                                       setState(() {
@@ -595,7 +691,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                                       isDone ? Icons.check : (item.isApproved ? Icons.timelapse : Icons.remove),
                                       size: 16,
                                       color: isDone
-                                          ? AppColors.background
+                                          ? Colors.white
                                           : item.isApproved
                                               ? AppColors.primary
                                               : AppColors.textSecondary,
@@ -706,45 +802,13 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 if (isPending)
-                                  InkWell(
+                                  MorphingDecisionButton(
+                                    isApproved: isApprovedDecision,
                                     onTap: () {
                                       setState(() {
                                         _itemDecisions[item.id] = isApprovedDecision ? 'REJECTED' : 'APPROVED';
                                       });
                                     },
-                                    borderRadius: BorderRadius.circular(6),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: isApprovedDecision
-                                            ? AppColors.primary // Solid navy
-                                            : Colors.transparent, // Silver outline
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: isApprovedDecision ? AppColors.primary : AppColors.accent,
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            isApprovedDecision ? Icons.check : Icons.close,
-                                            size: 11,
-                                            color: isApprovedDecision ? AppColors.background : AppColors.textSecondary,
-                                          ),
-                                          const SizedBox(width: 3),
-                                          Text(
-                                            isApprovedDecision ? 'APPROVE' : 'DECLINE',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 10,
-                                              fontWeight: isApprovedDecision ? FontWeight.w700 : FontWeight.w600,
-                                              color: isApprovedDecision ? AppColors.background : AppColors.textSecondary,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
                                   )
                                 else
                                   StatusBadge(
@@ -797,8 +861,8 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text('Selected Total', style: GoogleFonts.inter(fontSize: 10, color: AppColors.textSecondary)),
-                            Text(
-                              '\$${approvedPendingTotal.toStringAsFixed(2)}',
+                            CountingAmountText(
+                              value: approvedPendingTotal,
                               style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
                             ),
                           ],
@@ -806,30 +870,33 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary, // Solid Navy #1A1D29
-                        foregroundColor: AppColors.background, // Cream #F9EBEA
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        elevation: 0,
-                      ),
-                      icon: _isSubmitting
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
-                            )
-                          : const Icon(Icons.send_rounded, size: 18, color: AppColors.background),
-                      label: Text(
-                        _isSubmitting
-                            ? 'Sending to Technician...'
-                            : (approvedPendingCount > 0
-                                ? 'Send Choices to Technician & Start Work'
-                                : 'Send Decisions (Decline Selected)'),
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
-                      ),
+                    AppPressable(
                       onPressed: _isSubmitting ? null : () => _sendChoicesToTechnician(ticket),
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary, // Solid Sage #5F7F6B
+                          foregroundColor: Colors.white, // White text
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          elevation: 0,
+                        ),
+                        icon: _isSubmitting
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.send_rounded, size: 18, color: Colors.white),
+                        label: Text(
+                          _isSubmitting
+                              ? 'Sending to Technician...'
+                              : (approvedPendingCount > 0
+                                  ? 'Send Choices to Technician & Start Work'
+                                  : 'Send Decisions (Decline Selected)'),
+                          style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
+                        ),
+                        onPressed: _isSubmitting ? null : () => _sendChoicesToTechnician(ticket),
+                      ),
                     ),
                   ],
                 ),
@@ -907,7 +974,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.background,
+              foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text('Confirm & Send', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
@@ -930,7 +997,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
               approvedList.isNotEmpty
                   ? 'Your authorization was sent to the technician! Repairs are now in progress.'
                   : 'Your repair decisions have been submitted to the workshop.',
-              style: GoogleFonts.inter(color: AppColors.background),
+              style: GoogleFonts.inter(color: Colors.white),
             ),
             backgroundColor: AppColors.primary,
           ),
@@ -940,7 +1007,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to submit: $e', style: GoogleFonts.inter(color: AppColors.background)),
+            content: Text('Failed to submit: $e', style: GoogleFonts.inter(color: Colors.white)),
             backgroundColor: AppColors.primary,
           ),
         );
@@ -1239,8 +1306,8 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                       Expanded(
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.accent),
-                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(color: AppColors.border),
+                            foregroundColor: AppColors.textPrimary,
                           ),
                           onPressed: () => Navigator.pop(modalCtx),
                           child: Text('Save Choice', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
@@ -1251,9 +1318,9 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.background,
+                            foregroundColor: Colors.white,
                           ),
-                          icon: const Icon(Icons.send_rounded, size: 16, color: AppColors.background),
+                          icon: const Icon(Icons.send_rounded, size: 16, color: Colors.white),
                           label: Text('Send to Tech', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
                           onPressed: () {
                             Navigator.pop(modalCtx);
@@ -1302,7 +1369,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.background,
+                        foregroundColor: Colors.white,
                       ),
                       onPressed: () => Navigator.pop(modalCtx),
                       child: Text('Close', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
@@ -1355,14 +1422,17 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                   ],
                 ),
                 if (ticket.photos.isNotEmpty)
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.accent),
-                      foregroundColor: AppColors.primary,
-                    ),
-                    icon: const Icon(Icons.fullscreen, size: 16, color: AppColors.primary),
-                    label: Text('View All', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                  AppPressable(
                     onPressed: () => PhotoGalleryModal.show(context, ticket.photos),
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.accent),
+                        foregroundColor: AppColors.primary,
+                      ),
+                      icon: const Icon(Icons.fullscreen, size: 16, color: AppColors.primary),
+                      label: Text('View All', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                      onPressed: () => PhotoGalleryModal.show(context, ticket.photos),
+                    ),
                   ),
               ],
             ),
@@ -1415,7 +1485,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                               right: 0,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                color: AppColors.primary.withValues(alpha: 0.85),
+                                color: AppColors.charcoal.withValues(alpha: 0.85),
                                 child: Text(
                                   photo.caption.isNotEmpty ? photo.caption : photo.stageTitle,
                                   maxLines: 1,
@@ -1443,11 +1513,11 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
     if (invoice == null) return const SizedBox.shrink();
 
     return Card(
-      color: AppColors.surface, // #FFFFFF
+      color: AppColors.invoiceBg, // #2B2F2C Deep charcoal
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.border),
+        side: const BorderSide(color: AppColors.invoiceBorder), // #3F4541
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -1459,40 +1529,87 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.receipt_long, color: AppColors.primary),
+                    const Icon(Icons.receipt_long, color: AppColors.sage),
                     const SizedBox(width: 8),
                     Text(
                       'Invoice • ${invoice.invoiceNumber}',
-                      style: GoogleFonts.spaceGrotesk(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      style: GoogleFonts.spaceGrotesk(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.invoiceText),
                     ),
                   ],
                 ),
                 StatusBadge(status: invoice.status, fontSize: 12),
               ],
             ),
-            const Divider(color: AppColors.border),
-            _buildInvoiceRow('Subtotal (Approved Items)', '\$${invoice.subtotal.toStringAsFixed(2)}'),
-            _buildInvoiceRow('Estimated Tax', '\$${invoice.taxAmount.toStringAsFixed(2)}'),
+            const Divider(color: AppColors.invoiceBorder),
+            _buildInvoiceRow('Subtotal (Approved Items)', '\$${invoice.subtotal.toStringAsFixed(2)}', numericVal: invoice.subtotal),
+            _buildInvoiceRow('Estimated Tax', '\$${invoice.taxAmount.toStringAsFixed(2)}', numericVal: invoice.taxAmount),
             if (invoice.discountAmount > 0)
               _buildInvoiceRow('Discount', '-\$${invoice.discountAmount.toStringAsFixed(2)}'),
-            const Divider(color: AppColors.border),
+            const Divider(color: AppColors.invoiceBorder),
             _buildInvoiceRow(
               'Total Amount',
               '\$${invoice.totalAmount.toStringAsFixed(2)}',
               isBold: true,
               fontSize: 16,
+              color: AppColors.invoiceText,
+              numericVal: invoice.totalAmount,
             ),
             if (invoice.amountPaid > 0)
               _buildInvoiceRow(
                 'Amount Paid',
                 '\$${invoice.amountPaid.toStringAsFixed(2)}',
-                color: AppColors.textSecondary,
+                color: AppColors.invoiceMuted,
+                numericVal: invoice.amountPaid,
               ),
             _buildInvoiceRow(
               'Balance Due',
               '\$${invoice.balanceDue.toStringAsFixed(2)}',
               isBold: true,
-              color: AppColors.textPrimary,
+              color: AppColors.invoiceText,
+              numericVal: invoice.balanceDue,
+            ),
+            const SizedBox(height: 14),
+            // Sage pay button with white text
+            SizedBox(
+              width: double.infinity,
+              child: AppPressable(
+                onPressed: invoice.balanceDue > 0
+                    ? () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Payment simulated for invoice ${invoice.invoiceNumber}!', style: GoogleFonts.inter(color: Colors.white)),
+                            backgroundColor: AppColors.sage,
+                          ),
+                        );
+                      }
+                    : null,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.sage, // #5F7F6B
+                    foregroundColor: Colors.white, // white text
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.payment, size: 16, color: Colors.white),
+                  label: Text(
+                    invoice.balanceDue > 0
+                        ? 'Pay Balance Due (\$${invoice.balanceDue.toStringAsFixed(2)})'
+                        : 'Invoice Paid in Full',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                  onPressed: invoice.balanceDue > 0
+                      ? () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Payment simulated for invoice ${invoice.invoiceNumber}!', style: GoogleFonts.inter(color: Colors.white)),
+                              backgroundColor: AppColors.sage,
+                            ),
+                          );
+                        }
+                      : null,
+                ),
+              ),
             ),
           ],
         ),
@@ -1500,7 +1617,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
     );
   }
 
-  Widget _buildInvoiceRow(String label, String value, {bool isBold = false, double fontSize = 13, Color? color}) {
+  Widget _buildInvoiceRow(String label, String value, {bool isBold = false, double fontSize = 13, Color? color, double? numericVal}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
@@ -1511,17 +1628,26 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
             style: GoogleFonts.inter(
               fontSize: fontSize,
               fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
-              color: AppColors.textSecondary,
+              color: isBold ? AppColors.invoiceText : AppColors.invoiceMuted,
             ),
           ),
-          Text(
-            value,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: fontSize,
-              fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
-              color: color ?? (isBold ? AppColors.textPrimary : AppColors.textBody),
-            ),
-          ),
+          numericVal != null
+              ? CountingAmountText(
+                  value: numericVal,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: fontSize,
+                    fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
+                    color: color ?? AppColors.invoiceText,
+                  ),
+                )
+              : Text(
+                  value,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: fontSize,
+                    fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
+                    color: color ?? AppColors.invoiceText,
+                  ),
+                ),
         ],
       ),
     );

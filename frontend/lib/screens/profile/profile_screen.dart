@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../models/vehicle_model.dart';
@@ -371,37 +372,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
+        ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
               colors: [
-                Color(0xFF0F172A), // Deep Slate
-                Color(0xFF1E3A5F), // Deep Steel Blue
-                Color(0xFF1E293B), // Dark Slate
+                Color(0xFF5F7F6B), // Sage green #5F7F6B
+                Color(0xFF4E6B59), // Subtle deeper sage #4E6B59
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
             ),
-            border: Border(
-              bottom: BorderSide(color: Color(0xFF334155), width: 1),
-            ),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x1F2B2F2C),
+                blurRadius: 16,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
         ),
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: InkWell(
             onTap: () => Navigator.pop(context),
-            borderRadius: BorderRadius.circular(10),
+            customBorder: const CircleBorder(),
             child: Container(
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                color: Colors.white.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.20),
+                  width: 1.0,
+                ),
               ),
-              child: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                size: 16,
-                color: Colors.white,
+              child: const Center(
+                child: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 15,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -409,18 +424,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(7),
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
-                color: roleColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: roleColor.withValues(alpha: 0.5), width: 1.2),
-                boxShadow: [
-                  BoxShadow(
-                    color: roleColor.withValues(alpha: 0.35),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: Colors.white.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.20), width: 1.0),
               ),
               child: Icon(roleIcon, size: 18, color: Colors.white),
             ),
@@ -429,12 +438,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'ACCOUNT PROFILE',
-                  style: TextStyle(
+                  style: GoogleFonts.spaceGrotesk(
                     color: Colors.white,
                     fontSize: 15,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 1.1,
                   ),
                 ),
@@ -444,20 +453,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       width: 6,
                       height: 6,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF22C55E),
+                        color: Colors.white,
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFF22C55E),
-                            blurRadius: 4,
-                          ),
-                        ],
                       ),
                     ),
                     const SizedBox(width: 5),
                     Text(
                       '$roleBadgeLabel Settings',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         color: Colors.white.withValues(alpha: 0.75),
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -474,21 +477,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: roleColor.withValues(alpha: 0.15),
+              color: Colors.white.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: roleColor.withValues(alpha: 0.4)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.shield_outlined, size: 12, color: roleColor),
+                const Icon(Icons.shield_outlined, size: 12, color: Colors.white),
                 const SizedBox(width: 5),
                 Text(
                   role,
-                  style: TextStyle(
-                    color: roleColor,
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
                     fontSize: 10,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
                   ),
                 ),
@@ -501,7 +504,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 preferredSize: Size.fromHeight(2),
                 child: LinearProgressIndicator(
                   minHeight: 2,
-                  color: AppColors.accent,
+                  color: Colors.white,
                   backgroundColor: Colors.transparent,
                 ),
               )
@@ -928,22 +931,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         gradient: const LinearGradient(
           colors: [
-            Color(0xFF0F172A), // Deep Midnight Slate
-            Color(0xFF1E3A5F), // Deep Steel Blue (AppColors.primary)
-            Color(0xFF1D4ED8), // Electric Royal Blue
+            Color(0xFF5F7F6B), // Sage Green
+            Color(0xFF4E6B59), // Deep Sage Green
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1D4ED8).withValues(alpha: 0.45),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: const Color(0xFF5F7F6B).withValues(alpha: 0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
             spreadRadius: 1,
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: const Color(0xFF2B2F2C).withValues(alpha: 0.12),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -958,7 +960,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: InkWell(
           onTap: _isSaving ? null : _saveProfile,
           borderRadius: BorderRadius.circular(16),
-          splashColor: const Color(0xFF60A5FA).withValues(alpha: 0.35),
+          splashColor: Colors.white.withValues(alpha: 0.25),
           highlightColor: Colors.white.withValues(alpha: 0.12),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),

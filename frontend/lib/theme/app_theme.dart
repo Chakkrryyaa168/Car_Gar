@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
+import 'app_animations.dart';
 
 class AppTheme {
   static TextTheme _buildTextTheme(Color primaryText, Color bodyText, Color secondaryText) {
@@ -11,8 +12,8 @@ class AppTheme {
       displaySmall: GoogleFonts.spaceGrotesk(fontSize: 24, fontWeight: FontWeight.w700, color: primaryText),
       headlineLarge: GoogleFonts.spaceGrotesk(fontSize: 22, fontWeight: FontWeight.w700, color: primaryText),
       headlineMedium: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700, color: primaryText),
-      headlineSmall: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w600, color: primaryText),
-      titleLarge: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w600, color: primaryText),
+      headlineSmall: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w700, color: primaryText),
+      titleLarge: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w700, color: primaryText),
       titleMedium: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: primaryText),
       titleSmall: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: secondaryText),
       bodyLarge: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w400, color: bodyText),
@@ -24,49 +25,49 @@ class AppTheme {
     );
   }
 
-  static ThemeData get softCalmTheme {
+  static ThemeData get earthyCalmTheme {
     final textTheme = _buildTextTheme(AppColors.textPrimary, AppColors.textBody, AppColors.textSecondary);
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       primaryColor: AppColors.primary,
-      scaffoldBackgroundColor: AppColors.background, // #F9EBEA (Warm Mediterranean Cream)
+      scaffoldBackgroundColor: AppColors.background, // #F5F1E8 (Warm Sand)
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primary, // #1A1D29 (Moody Navy-Black)
-        secondary: AppColors.secondary, // #B1B2B5 (Silver-Gray)
-        surface: AppColors.surface, // #FFFFFF (Pure White Card)
-        error: AppColors.textBody,
-        onPrimary: AppColors.background, // #F9EBEA (Cream Text on Navy Button)
-        onSecondary: AppColors.primary,
-        onSurface: AppColors.textPrimary,
+        primary: AppColors.primary, // #5F7F6B (Sage Green)
+        secondary: AppColors.secondary, // #7C837E (Soft Gray-Green)
+        surface: AppColors.surface, // #FFFFFF (Clean White Card)
+        error: AppColors.textSecondary,
+        onPrimary: Colors.white, // White text on Sage Green
+        onSecondary: AppColors.textPrimary,
+        onSurface: AppColors.textPrimary, // #2B2F2C (Deep Charcoal)
       ),
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textPrimary,
+        backgroundColor: AppColors.topBarBackground, // #5F7F6B
+        foregroundColor: AppColors.topBarText, // White
         elevation: 0,
         centerTitle: false,
         titleTextStyle: GoogleFonts.spaceGrotesk(
-          color: AppColors.textPrimary,
+          color: AppColors.topBarText,
           fontSize: 18,
           fontWeight: FontWeight.w700,
         ),
-        iconTheme: const IconThemeData(color: AppColors.primary),
+        iconTheme: const IconThemeData(color: AppColors.topBarText),
       ),
       cardTheme: CardThemeData(
         color: AppColors.surface, // #FFFFFF
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: AppColors.border, width: 1), // #E8DAD8
+          side: const BorderSide(color: AppColors.border, width: 1), // #E4DED0
         ),
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary, // Solid Navy #1A1D29
-          foregroundColor: AppColors.background, // Cream #F9EBEA
+          backgroundColor: AppColors.primary, // Solid Sage #5F7F6B
+          foregroundColor: Colors.white, // White text
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           shape: RoundedRectangleBorder(
@@ -80,8 +81,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          side: const BorderSide(color: AppColors.accent, width: 1), // Silver outline #B1B2B5
+          foregroundColor: AppColors.textPrimary, // Charcoal text #2B2F2C
+          side: const BorderSide(color: AppColors.border, width: 1), // Border color #E4DED0
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -118,15 +119,26 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
+        selectedItemColor: AppColors.primary, // Sage Green
+        unselectedItemColor: AppColors.textSecondary, // Soft Gray-Green
         elevation: 0,
+      ),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CalmPageTransitionsBuilder(),
+          TargetPlatform.iOS: CalmPageTransitionsBuilder(),
+          TargetPlatform.macOS: CalmPageTransitionsBuilder(),
+          TargetPlatform.windows: CalmPageTransitionsBuilder(),
+          TargetPlatform.linux: CalmPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: CalmPageTransitionsBuilder(),
+        },
       ),
     );
   }
 
   // Aliases for compatibility
-  static ThemeData get moodyDarkTheme => softCalmTheme;
-  static ThemeData get lightTheme => softCalmTheme;
-  static ThemeData get darkTheme => softCalmTheme;
+  static ThemeData get softCalmTheme => earthyCalmTheme;
+  static ThemeData get moodyDarkTheme => earthyCalmTheme;
+  static ThemeData get lightTheme => earthyCalmTheme;
+  static ThemeData get darkTheme => earthyCalmTheme;
 }

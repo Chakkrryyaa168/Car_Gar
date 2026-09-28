@@ -21,7 +21,7 @@ class StatusBadge extends StatelessWidget {
     final label = customLabel ?? AppColors.getStatusLabel(status);
     final upper = status.toUpperCase();
 
-    // Express status through navy vs. silver contrast and weight — NO bright colors (orange/green/red)
+    // Express status through sage vs. charcoal vs. muted gray — NO bright colors (orange/green/red)
     Color bgColor;
     Color borderColor;
     Color textColor;
@@ -31,30 +31,30 @@ class StatusBadge extends StatelessWidget {
       case 'APPROVED_IN_PROGRESS':
       case 'INSPECTING':
       case 'INSPECTION_PENDING':
-        bgColor = AppColors.primary; // Solid Navy #1A1D29
+        bgColor = AppColors.primary; // Solid Sage #5F7F6B
         borderColor = AppColors.primary;
-        textColor = AppColors.background; // Cream #F9EBEA
+        textColor = Colors.white;
         fontWeight = FontWeight.w600;
         break;
       case 'PENDING_CUSTOMER_APPROVAL':
-        bgColor = AppColors.surfaceElevated; // #FDF6F5
-        borderColor = AppColors.primary; // Strong navy border for urgency
-        textColor = AppColors.primary; // Navy text
+        bgColor = AppColors.surfaceElevated; // #FBF9F4
+        borderColor = AppColors.charcoal; // Strong charcoal border for urgency
+        textColor = AppColors.charcoal; // Deep charcoal text
         fontWeight = FontWeight.w700;
         break;
       case 'WORK_COMPLETED':
       case 'READY_FOR_PICKUP':
-      case 'PAID_AND_CLOSED':
-        bgColor = AppColors.surface; // #FFFFFF
-        borderColor = AppColors.border; // Soft warm gray
-        textColor = AppColors.textBody; // Softened navy
+        bgColor = AppColors.sageLight; // Soft sage wash
+        borderColor = AppColors.sage;
+        textColor = AppColors.sageDark;
         fontWeight = FontWeight.w600;
         break;
+      case 'PAID_AND_CLOSED':
       case 'CHECKED_IN':
       default:
-        bgColor = AppColors.surfaceElevated; // #FDF6F5
-        borderColor = AppColors.border; // #E8DAD8
-        textColor = AppColors.textSecondary; // Muted silver-gray #8A8B8F
+        bgColor = AppColors.surfaceElevated; // #FBF9F4
+        borderColor = AppColors.border; // Warm light gray #E4DED0
+        textColor = AppColors.textSecondary; // Soft gray-green #7C837E
         fontWeight = FontWeight.w500;
         break;
     }
