@@ -3,6 +3,7 @@ class VehicleModel {
   final String owner;
   final String? ownerName;
   final String? ownerPhone;
+  final String? ownerCustomerCode;
   final String licensePlate;
   final String vin;
   final String make;
@@ -16,6 +17,7 @@ class VehicleModel {
     required this.owner,
     this.ownerName,
     this.ownerPhone,
+    this.ownerCustomerCode,
     required this.licensePlate,
     required this.vin,
     required this.make,
@@ -31,6 +33,7 @@ class VehicleModel {
       owner: json['owner'] ?? '',
       ownerName: json['owner_name'],
       ownerPhone: json['owner_phone'],
+      ownerCustomerCode: json['owner_customer_code'],
       licensePlate: json['license_plate'] ?? '',
       vin: json['vin'] ?? '',
       make: json['make'] ?? '',

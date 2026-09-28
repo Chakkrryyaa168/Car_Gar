@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/ticket_provider.dart';
@@ -29,6 +32,11 @@ class _AuthScreenState extends State<AuthScreen> {
   final _regPasswordController = TextEditingController();
   final _regConfirmPasswordController = TextEditingController();
   bool _regObscure = true;
+
+  // Profile Picture / Avatar State for Registration
+  String? _regAvatarUrl;
+  Uint8List? _regAvatarBytes;
+  bool _isUploadingAvatar = false;
 
   // Vehicle Details (Optional during registration)
   bool _showVehicleForm = false;
@@ -63,19 +71,49 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
+  InputDecoration _buildInputDecoration({
+    required String hintText,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+    Color fillColor = AppColors.surfaceElevated,
+  }) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.textMuted),
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: fillColor,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.danger),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.danger, width: 1.2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final Color bgColor = isDark ? const Color(0xFF0F1520) : const Color(0xFFF8FAFC);
-    final Color surfaceColor = isDark ? const Color(0xFF171F2C) : const Color(0xFFFFFFFF);
-    final Color textColor = isDark ? const Color(0xFFE6EAF0) : const Color(0xFF1E293B);
-    final Color mutedColor = isDark ? const Color(0xFF8B96A5) : const Color(0xFF64748B);
-    final Color borderColor = isDark ? const Color(0xFF2A3444) : const Color(0xFFE2E8F0);
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: AppColors.background, // Warm Mediterranean cream #F9EBEA
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -89,15 +127,15 @@ class _AuthScreenState extends State<AuthScreen> {
                   _buildBrandHeader(),
                   const SizedBox(height: 24),
 
-                  // Main Auth Card
+                  // Main Auth Card (Floating softly on cream)
                   Container(
                     decoration: BoxDecoration(
-                      color: surfaceColor,
+                      color: AppColors.surface, // #FFFFFF
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: borderColor),
+                      border: Border.all(color: AppColors.border), // #E8DAD8
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
+                          color: const Color(0xFF1A1D29).withValues(alpha: 0.04),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
@@ -110,7 +148,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Segmented Tabs: Sign In / Create Account
-                          _buildSegmentedTab(borderColor, surfaceColor, isDark),
+                          _buildSegmentedTab(),
                           const SizedBox(height: 22),
 
                           // Error Banner
@@ -118,18 +156,22 @@ class _AuthScreenState extends State<AuthScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               decoration: BoxDecoration(
-                                color: AppColors.danger.withValues(alpha: 0.12),
+                                color: AppColors.surfaceElevated,
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
+                                border: Border.all(color: AppColors.border),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.error_outline, size: 18, color: AppColors.danger),
+                                  const Icon(Icons.info_outline, size: 18, color: AppColors.primary),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       auth.errorMessage!,
-                                      style: const TextStyle(fontSize: 12, color: AppColors.danger, fontWeight: FontWeight.w600),
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -140,9 +182,9 @@ class _AuthScreenState extends State<AuthScreen> {
 
                           // Form Content: Login or Register
                           if (!_isRegister)
-                            _buildLoginForm(textColor, mutedColor, borderColor, auth)
+                            _buildLoginForm(auth)
                           else
-                            _buildRegisterForm(textColor, mutedColor, borderColor, auth),
+                            _buildRegisterForm(auth),
                         ],
                       ),
                     ),
@@ -152,7 +194,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
                   // Quick Demo Role Login Buttons
                   if (!_isRegister)
-                    _buildQuickDemoSelector(surfaceColor, borderColor, mutedColor, auth),
+                    _buildQuickDemoSelector(auth),
                 ],
               ),
             ),
@@ -170,38 +212,37 @@ class _AuthScreenState extends State<AuthScreen> {
           width: 58,
           height: 58,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF1E3A5F), Color(0xFF152A45)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: AppColors.primary, // Solid Navy #1A1D29
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1E3A5F).withValues(alpha: 0.25),
+                color: const Color(0xFF1A1D29).withValues(alpha: 0.15),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
           child: const Center(
-            child: Icon(Icons.directions_car_filled, color: Colors.white, size: 30),
+            child: Icon(Icons.directions_car_filled, color: AppColors.background, size: 30),
           ),
         ),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           'CAR GARAGE',
-          style: TextStyle(
+          style: GoogleFonts.spaceGrotesk(
             fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF1E3A5F),
-            letterSpacing: 1.2,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+            letterSpacing: 1.4,
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Service, Inspection & Repair Management Portal',
-          style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
           textAlign: TextAlign.center,
         ),
       ],
@@ -209,12 +250,13 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   // Segmented Tab Switcher
-  Widget _buildSegmentedTab(Color borderColor, Color surfaceColor, bool isDark) {
+  Widget _buildSegmentedTab() {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF222C3D) : const Color(0xFFF1F5F9),
+        color: AppColors.surfaceElevated, // #FDF6F5
         borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -227,24 +269,16 @@ class _AuthScreenState extends State<AuthScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: !_isRegister ? surfaceColor : Colors.transparent,
+                  color: !_isRegister ? AppColors.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: !_isRegister
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 4,
-                          )
-                        ]
-                      : null,
                 ),
                 child: Text(
                   'Sign In',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
-                    fontWeight: !_isRegister ? FontWeight.bold : FontWeight.w500,
-                    color: !_isRegister ? const Color(0xFF1E3A5F) : const Color(0xFF64748B),
+                    fontWeight: !_isRegister ? FontWeight.w700 : FontWeight.w500,
+                    color: !_isRegister ? AppColors.background : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -259,24 +293,16 @@ class _AuthScreenState extends State<AuthScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: _isRegister ? surfaceColor : Colors.transparent,
+                  color: _isRegister ? AppColors.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: _isRegister
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 4,
-                          )
-                        ]
-                      : null,
                 ),
                 child: Text(
                   'Create Account',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
-                    fontWeight: _isRegister ? FontWeight.bold : FontWeight.w500,
-                    color: _isRegister ? const Color(0xFF1E3A5F) : const Color(0xFF64748B),
+                    fontWeight: _isRegister ? FontWeight.w700 : FontWeight.w500,
+                    color: _isRegister ? AppColors.background : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -290,17 +316,21 @@ class _AuthScreenState extends State<AuthScreen> {
   // -------------------------------------------------------------
   // LOGIN FORM
   // -------------------------------------------------------------
-  Widget _buildLoginForm(Color text, Color muted, Color border, AuthProvider auth) {
+  Widget _buildLoginForm(AuthProvider auth) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Email or Username', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: text)),
+        Text(
+          'Email or Username',
+          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        ),
         const SizedBox(height: 6),
         TextFormField(
           controller: _loginEmailController,
-          decoration: InputDecoration(
+          style: GoogleFonts.inter(fontSize: 13, color: AppColors.textBody),
+          decoration: _buildInputDecoration(
             hintText: 'name@example.com',
-            prefixIcon: Icon(Icons.email_outlined, size: 18, color: muted),
+            prefixIcon: const Icon(Icons.email_outlined, size: 18, color: AppColors.primary),
           ),
           validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter your email or username' : null,
         ),
@@ -309,18 +339,29 @@ class _AuthScreenState extends State<AuthScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Password', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: text)),
+            Text(
+              'Password',
+              style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            ),
             InkWell(
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Demo: Use password "customer123", "mechanic123", or 1-tap demo logins below.'),
+                  SnackBar(
+                    backgroundColor: AppColors.primary,
+                    content: Text(
+                      'Demo: Use password "customer123", "mechanic123", or 1-tap demo logins below.',
+                      style: GoogleFonts.inter(color: AppColors.background),
+                    ),
                   ),
                 );
               },
-              child: const Text(
+              child: Text(
                 'Forgot password?',
-                style: TextStyle(fontSize: 12, color: Color(0xFFF97316), fontWeight: FontWeight.w600),
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -329,11 +370,16 @@ class _AuthScreenState extends State<AuthScreen> {
         TextFormField(
           controller: _loginPasswordController,
           obscureText: _loginObscure,
-          decoration: InputDecoration(
+          style: GoogleFonts.inter(fontSize: 13, color: AppColors.textBody),
+          decoration: _buildInputDecoration(
             hintText: 'Enter your password',
-            prefixIcon: Icon(Icons.lock_outline, size: 18, color: muted),
+            prefixIcon: const Icon(Icons.lock_outline, size: 18, color: AppColors.primary),
             suffixIcon: IconButton(
-              icon: Icon(_loginObscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: muted),
+              icon: Icon(
+                _loginObscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
               onPressed: () => setState(() => _loginObscure = !_loginObscure),
             ),
           ),
@@ -341,20 +387,30 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         const SizedBox(height: 22),
 
-        // Sign In Button
+        // Sign In Button (Solid navy with cream text)
         SizedBox(
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1E3A5F),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              backgroundColor: AppColors.primary, // Solid Navy #1A1D29
+              foregroundColor: AppColors.background, // Cream #F9EBEA
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: auth.isLoading ? null : _handleLogin,
             child: auth.isLoading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Sign In to Garage', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(color: AppColors.background, strokeWidth: 2),
+                  )
+                : Text(
+                    'Sign In',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.background),
+                  ),
           ),
         ),
       ],
@@ -364,58 +420,81 @@ class _AuthScreenState extends State<AuthScreen> {
   // -------------------------------------------------------------
   // REGISTER FORM
   // -------------------------------------------------------------
-  Widget _buildRegisterForm(Color text, Color muted, Color border, AuthProvider auth) {
+  Widget _buildRegisterForm(AuthProvider auth) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Full Name', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: text)),
+        _buildAvatarSelector(),
+        const SizedBox(height: 14),
+
+        Text(
+          'Full Name',
+          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        ),
         const SizedBox(height: 6),
         TextFormField(
           controller: _regNameController,
-          decoration: InputDecoration(
+          style: GoogleFonts.inter(fontSize: 13, color: AppColors.textBody),
+          decoration: _buildInputDecoration(
             hintText: 'e.g. John Doe',
-            prefixIcon: Icon(Icons.person_outline, size: 18, color: muted),
+            prefixIcon: const Icon(Icons.person_outline, size: 18, color: AppColors.primary),
           ),
           validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter your full name' : null,
         ),
         const SizedBox(height: 14),
 
-        Text('Email Address', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: text)),
+        Text(
+          'Email Address',
+          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        ),
         const SizedBox(height: 6),
         TextFormField(
           controller: _regEmailController,
           keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
+          style: GoogleFonts.inter(fontSize: 13, color: AppColors.textBody),
+          decoration: _buildInputDecoration(
             hintText: 'john@example.com',
-            prefixIcon: Icon(Icons.email_outlined, size: 18, color: muted),
+            prefixIcon: const Icon(Icons.email_outlined, size: 18, color: AppColors.primary),
           ),
           validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
         ),
         const SizedBox(height: 14),
 
-        Text('Phone Number', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: text)),
+        Text(
+          'Phone Number',
+          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        ),
         const SizedBox(height: 6),
         TextFormField(
           controller: _regPhoneController,
           keyboardType: TextInputType.phone,
-          decoration: InputDecoration(
+          style: GoogleFonts.inter(fontSize: 13, color: AppColors.textBody),
+          decoration: _buildInputDecoration(
             hintText: '+1 555-0199',
-            prefixIcon: Icon(Icons.phone_outlined, size: 18, color: muted),
+            prefixIcon: const Icon(Icons.phone_outlined, size: 18, color: AppColors.primary),
           ),
           validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter your phone number' : null,
         ),
         const SizedBox(height: 14),
 
-        Text('Password', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: text)),
+        Text(
+          'Password',
+          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        ),
         const SizedBox(height: 6),
         TextFormField(
           controller: _regPasswordController,
           obscureText: _regObscure,
-          decoration: InputDecoration(
+          style: GoogleFonts.inter(fontSize: 13, color: AppColors.textBody),
+          decoration: _buildInputDecoration(
             hintText: 'At least 6 characters',
-            prefixIcon: Icon(Icons.lock_outline, size: 18, color: muted),
+            prefixIcon: const Icon(Icons.lock_outline, size: 18, color: AppColors.primary),
             suffixIcon: IconButton(
-              icon: Icon(_regObscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: muted),
+              icon: Icon(
+                _regObscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
               onPressed: () => setState(() => _regObscure = !_regObscure),
             ),
           ),
@@ -423,14 +502,18 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         const SizedBox(height: 14),
 
-        Text('Confirm Password', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: text)),
+        Text(
+          'Confirm Password',
+          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        ),
         const SizedBox(height: 6),
         TextFormField(
           controller: _regConfirmPasswordController,
           obscureText: _regObscure,
-          decoration: InputDecoration(
+          style: GoogleFonts.inter(fontSize: 13, color: AppColors.textBody),
+          decoration: _buildInputDecoration(
             hintText: 'Re-enter your password',
-            prefixIcon: Icon(Icons.lock_outline, size: 18, color: muted),
+            prefixIcon: const Icon(Icons.lock_outline, size: 18, color: AppColors.primary),
           ),
           validator: (v) {
             if (v == null || v.isEmpty) return 'Confirm your password';
@@ -443,9 +526,9 @@ class _AuthScreenState extends State<AuthScreen> {
         // Optional Vehicle Details Accordion
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF1E3A5F).withValues(alpha: 0.04),
+            color: AppColors.surfaceElevated, // #FDF6F5
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: border),
+            border: Border.all(color: AppColors.border),
           ),
           child: Column(
             children: [
@@ -456,18 +539,22 @@ class _AuthScreenState extends State<AuthScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   child: Row(
                     children: [
-                      const Icon(Icons.directions_car_outlined, size: 18, color: Color(0xFF1E3A5F)),
+                      const Icon(Icons.directions_car_outlined, size: 18, color: AppColors.primary),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           _showVehicleForm ? 'Vehicle Details (Optional)' : 'Add Vehicle Details (Optional)',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1E3A5F)),
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
                       Icon(
                         _showVehicleForm ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                         size: 20,
-                        color: muted,
+                        color: AppColors.primary,
                       ),
                     ],
                   ),
@@ -479,7 +566,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Divider(height: 1),
+                      const Divider(height: 1, color: AppColors.border),
                       const SizedBox(height: 12),
                       Row(
                         children: [
@@ -487,11 +574,18 @@ class _AuthScreenState extends State<AuthScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('License Plate', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: text)),
+                                Text(
+                                  'License Plate',
+                                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                                ),
                                 const SizedBox(height: 4),
                                 TextFormField(
                                   controller: _plateController,
-                                  decoration: const InputDecoration(hintText: 'e.g. ABC-1234'),
+                                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.textBody),
+                                  decoration: _buildInputDecoration(
+                                    hintText: 'e.g. ABC-1234',
+                                    fillColor: AppColors.surface,
+                                  ),
                                 ),
                               ],
                             ),
@@ -501,12 +595,19 @@ class _AuthScreenState extends State<AuthScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Year', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: text)),
+                                Text(
+                                  'Year',
+                                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                                ),
                                 const SizedBox(height: 4),
                                 TextFormField(
                                   controller: _yearController,
                                   keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(hintText: '2022'),
+                                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.textBody),
+                                  decoration: _buildInputDecoration(
+                                    hintText: '2022',
+                                    fillColor: AppColors.surface,
+                                  ),
                                 ),
                               ],
                             ),
@@ -520,11 +621,18 @@ class _AuthScreenState extends State<AuthScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Make & Model', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: text)),
+                                Text(
+                                  'Make & Model',
+                                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                                ),
                                 const SizedBox(height: 4),
                                 TextFormField(
                                   controller: _makeController,
-                                  decoration: const InputDecoration(hintText: 'Toyota Camry'),
+                                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.textBody),
+                                  decoration: _buildInputDecoration(
+                                    hintText: 'Toyota Camry',
+                                    fillColor: AppColors.surface,
+                                  ),
                                 ),
                               ],
                             ),
@@ -534,11 +642,18 @@ class _AuthScreenState extends State<AuthScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Color', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: text)),
+                                Text(
+                                  'Color',
+                                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                                ),
                                 const SizedBox(height: 4),
                                 TextFormField(
                                   controller: _colorController,
-                                  decoration: const InputDecoration(hintText: 'Silver'),
+                                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.textBody),
+                                  decoration: _buildInputDecoration(
+                                    hintText: 'Silver',
+                                    fillColor: AppColors.surface,
+                                  ),
                                 ),
                               ],
                             ),
@@ -553,50 +668,60 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         const SizedBox(height: 22),
 
-        // Create Account CTA Button (#F97316 Safety Orange)
+        // Create Account CTA Button (Solid navy with cream text)
         SizedBox(
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF97316),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.background,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: auth.isLoading ? null : _handleRegister,
             child: auth.isLoading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Create Customer Account', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(color: AppColors.background, strokeWidth: 2),
+                  )
+                : Text(
+                    'Create Account',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.background),
+                  ),
           ),
         ),
       ],
     );
   }
 
-  // Quick Demo Accounts Credential Loader (Fills and shows email/password)
-  Widget _buildQuickDemoSelector(Color surface, Color border, Color muted, AuthProvider auth) {
+  // Quick Demo Accounts Credential Loader
+  Widget _buildQuickDemoSelector(AuthProvider auth) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: surface,
+        color: AppColors.surface, // #FFFFFF
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.key_outlined, size: 16, color: Color(0xFFF97316)),
+              const Icon(Icons.key_outlined, size: 16, color: AppColors.primary),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   'TEST ROLE CREDENTIALS (CLICK TO FILL & VIEW)',
-                  style: TextStyle(
+                  style: GoogleFonts.spaceGrotesk(
                     fontSize: 11,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
-                    color: muted,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -604,8 +729,8 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Click any role below to populate and display its email and password above. Then press "Sign In to Garage".',
-            style: TextStyle(fontSize: 12, color: muted),
+            'Click any role below to populate its email and password above. Then press "Sign In".',
+            style: GoogleFonts.inter(fontSize: 12, color: AppColors.textBody),
           ),
           const SizedBox(height: 12),
           GridView.count(
@@ -627,18 +752,18 @@ class _AuthScreenState extends State<AuthScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E3A5F).withValues(alpha: 0.08),
+                color: AppColors.surfaceElevated,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF1E3A5F).withValues(alpha: 0.2)),
+                border: Border.all(color: AppColors.border),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle, size: 16, color: Color(0xFF1E3A5F)),
+                  const Icon(Icons.check_circle_outline, size: 16, color: AppColors.primary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '$_selectedDemoRole credentials loaded into form! Click "Sign In to Garage" above.',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E3A5F)),
+                      '$_selectedDemoRole credentials loaded into form! Click "Sign In" above.',
+                      style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                     ),
                   ),
                 ],
@@ -656,9 +781,9 @@ class _AuthScreenState extends State<AuthScreen> {
     return OutlinedButton(
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        backgroundColor: isSelected ? const Color(0xFF1E3A5F).withValues(alpha: 0.08) : Colors.transparent,
+        backgroundColor: isSelected ? AppColors.primary : AppColors.surfaceElevated,
         side: BorderSide(
-          color: isSelected ? const Color(0xFF1E3A5F) : const Color(0xFFE2E8F0),
+          color: isSelected ? AppColors.primary : AppColors.border,
           width: isSelected ? 1.5 : 1.0,
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -667,21 +792,24 @@ class _AuthScreenState extends State<AuthScreen> {
         setState(() {
           _loginEmailController.text = email;
           _loginPasswordController.text = password;
-          _loginObscure = false; // Show the password so user sees it
+          _loginObscure = false;
           _selectedDemoRole = title;
         });
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Filled $title credentials ($email / $password). Click "Sign In to Garage" to authenticate.'),
+            backgroundColor: AppColors.primary,
+            content: Text(
+              'Filled $title credentials ($email / $password). Click "Sign In" to authenticate.',
+              style: GoogleFonts.inter(color: AppColors.background),
+            ),
             duration: const Duration(seconds: 2),
-            backgroundColor: const Color(0xFF1E3A5F),
           ),
         );
       },
       child: Row(
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF1E3A5F)),
+          Icon(icon, size: 18, color: isSelected ? AppColors.background : AppColors.primary),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -690,11 +818,18 @@ class _AuthScreenState extends State<AuthScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E3A5F)),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? AppColors.background : AppColors.textPrimary,
+                  ),
                 ),
                 Text(
                   email,
-                  style: const TextStyle(fontSize: 9, color: Color(0xFF64748B)),
+                  style: GoogleFonts.inter(
+                    fontSize: 9,
+                    color: isSelected ? AppColors.background.withValues(alpha: 0.8) : AppColors.textSecondary,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -726,11 +861,24 @@ class _AuthScreenState extends State<AuthScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
+
+    // If an image was picked from device but not yet uploaded, upload it now
+    if (_regAvatarUrl == null && _regAvatarBytes != null) {
+      try {
+        _regAvatarUrl = await auth.apiService.uploadImageFile(
+          fileBytes: _regAvatarBytes!,
+          fileName: 'avatar_reg_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          folder: 'car_gar/avatars',
+        );
+      } catch (_) {}
+    }
+
     final success = await auth.register(
       email: _regEmailController.text.trim(),
       password: _regPasswordController.text,
       fullName: _regNameController.text.trim(),
       phoneNumber: _regPhoneController.text.trim(),
+      avatarUrl: _regAvatarUrl,
       licensePlate: _plateController.text.trim().isNotEmpty ? _plateController.text.trim() : null,
       make: _makeController.text.trim().isNotEmpty ? _makeController.text.trim() : null,
       model: _modelController.text.trim().isNotEmpty ? _modelController.text.trim() : null,
@@ -741,13 +889,226 @@ class _AuthScreenState extends State<AuthScreen> {
     if (success && mounted) {
       Provider.of<TicketProvider>(context, listen: false).fetchTickets();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account registered successfully! Welcome to Car Garage.'),
-          backgroundColor: AppColors.success,
+        SnackBar(
+          backgroundColor: AppColors.primary,
+          content: Text(
+            'Account registered successfully! Welcome to Car Garage.',
+            style: GoogleFonts.inter(color: AppColors.background),
+          ),
         ),
       );
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
+      }
+    }
+  }
+
+  // -------------------------------------------------------------
+  // AVATAR PICKER FOR REGISTRATION
+  // -------------------------------------------------------------
+  Widget _buildAvatarSelector() {
+    final hasImage = _regAvatarBytes != null || (_regAvatarUrl != null && _regAvatarUrl!.isNotEmpty);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated, // #FDF6F5
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          // Interactive avatar circle
+          InkWell(
+            onTap: _isUploadingAvatar ? null : _pickAndUploadAvatar,
+            borderRadius: BorderRadius.circular(34),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CircleAvatar(
+                  radius: 32,
+                  backgroundColor: AppColors.surface,
+                  backgroundImage: _regAvatarBytes != null
+                      ? MemoryImage(_regAvatarBytes!)
+                      : (_regAvatarUrl != null && _regAvatarUrl!.isNotEmpty)
+                          ? NetworkImage(_regAvatarUrl!) as ImageProvider
+                          : null,
+                  child: !hasImage
+                      ? const Icon(Icons.person_outline, size: 32, color: AppColors.primary)
+                      : null,
+                ),
+                if (_isUploadingAvatar)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
+                        ),
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  bottom: -2,
+                  right: -2,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.surface, width: 1.5),
+                    ),
+                    child: Icon(
+                      hasImage ? Icons.check : Icons.camera_alt_outlined,
+                      size: 11,
+                      color: AppColors.background,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+
+          // Upload Image button & description
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Profile Photo',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '(Optional)',
+                      style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _isUploadingAvatar
+                      ? 'Uploading photo to garage...'
+                      : hasImage
+                          ? 'Photo attached to account'
+                          : 'Upload your profile picture from device',
+                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.background,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        visualDensity: VisualDensity.compact,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.upload, size: 14, color: AppColors.background),
+                      label: Text(
+                        'Upload Image',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.background),
+                      ),
+                      onPressed: _isUploadingAvatar ? null : _pickAndUploadAvatar,
+                    ),
+                    if (hasImage && !_isUploadingAvatar) ...[
+                      const SizedBox(width: 6),
+                      IconButton(
+                        tooltip: 'Remove Photo',
+                        icon: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          setState(() {
+                            _regAvatarUrl = null;
+                            _regAvatarBytes = null;
+                          });
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickAndUploadAvatar() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+
+    try {
+      final files = await FilePicker.pickFiles(type: FileType.image);
+      if (files.isNotEmpty) {
+        final file = files.first;
+        final bytes = await file.readAsBytes();
+        setState(() {
+          _regAvatarBytes = bytes;
+          _isUploadingAvatar = true;
+        });
+
+        try {
+          final uploadedUrl = await auth.apiService.uploadImageFile(
+            fileBytes: bytes,
+            fileName: file.name,
+            folder: 'car_gar/avatars',
+          );
+          if (mounted) {
+            setState(() {
+              _regAvatarUrl = uploadedUrl;
+              _isUploadingAvatar = false;
+            });
+            messenger.showSnackBar(
+              SnackBar(
+                backgroundColor: AppColors.primary,
+                content: Text(
+                  'Profile image uploaded successfully!',
+                  style: GoogleFonts.inter(color: AppColors.background),
+                ),
+              ),
+            );
+          }
+        } catch (uploadError) {
+          if (mounted) {
+            setState(() => _isUploadingAvatar = false);
+            messenger.showSnackBar(
+              SnackBar(
+                backgroundColor: AppColors.primary,
+                content: Text(
+                  'Upload failed: $uploadError',
+                  style: GoogleFonts.inter(color: AppColors.background),
+                ),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.primary,
+            content: Text(
+              'Failed to select file: $e',
+              style: GoogleFonts.inter(color: AppColors.background),
+            ),
+          ),
+        );
       }
     }
   }

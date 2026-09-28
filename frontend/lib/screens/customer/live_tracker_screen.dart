@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../models/ticket_model.dart';
+import '../../models/ticket_item_model.dart';
 import '../../providers/ticket_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/status_badge.dart';
@@ -19,6 +21,17 @@ class LiveTrackerScreen extends StatefulWidget {
 }
 
 class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
+  final Map<String, String> _itemDecisions = {}; // itemId -> 'APPROVED' | 'REJECTED'
+  bool _isSubmitting = false;
+
+  void _syncDecisions(List<TicketItemModel> items) {
+    for (var item in items) {
+      if (item.isPending && !_itemDecisions.containsKey(item.id)) {
+        _itemDecisions[item.id] = 'APPROVED';
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -35,13 +48,21 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
         final ticket = provider.selectedTicket;
 
         return Scaffold(
+          backgroundColor: AppColors.background,
           appBar: AppBar(
+            backgroundColor: AppColors.background,
+            elevation: 0,
             title: Text(
               ticket != null ? 'Live Tracker • ${ticket.ticketNumber}' : 'Live Ticket Tracker',
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh, color: AppColors.primary),
                 tooltip: 'Refresh Ticket',
                 onPressed: () => provider.fetchTicketDetail(widget.ticketId),
               ),
@@ -53,7 +74,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                   ? Center(
                       child: Text(
                         provider.errorMessage ?? 'Ticket not found.',
-                        style: const TextStyle(color: AppColors.danger),
+                        style: GoogleFonts.inter(color: AppColors.textSecondary),
                       ),
                     )
                   : RefreshIndicator(
@@ -103,6 +124,12 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
 
   Widget _buildVehicleHeaderCard(TicketModel ticket) {
     return Card(
+      color: AppColors.surface, // #FFFFFF
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.border),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -117,19 +144,42 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                     children: [
                       Text(
                         ticket.vehicleInfo ?? 'Vehicle Information',
-                        style: const TextStyle(
+                        style: GoogleFonts.spaceGrotesk(
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        'Ticket #${ticket.ticketNumber}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            'Ticket #${ticket.ticketNumber}',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          if (ticket.customerCode != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceElevated,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Text(
+                                'Customer ID: ${ticket.customerCode}',
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
@@ -137,40 +187,160 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                 StatusBadge(status: ticket.currentStatus, fontSize: 13),
               ],
             ),
-            const Divider(),
+            const Divider(color: AppColors.border),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildInfoMetric(Icons.speed, 'Mileage In', '${ticket.mileageIn} mi'),
                 _buildInfoMetric(Icons.local_gas_station, 'Fuel Level', '${ticket.fuelLevelPercent}%'),
                 _buildInfoMetric(
-                  Icons.person_pin,
-                  'Lead Tech',
-                  ticket.leadMechanicName ?? 'Pending Assignment',
+                  Icons.event_available,
+                  'Opened',
+                  ticket.createdAt != null
+                      ? '${ticket.createdAt!.month}/${ticket.createdAt!.day}/${ticket.createdAt!.year}'
+                      : 'Today',
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            _buildAssignedMechanicCard(ticket),
             if (ticket.notes.isNotEmpty) ...[
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: AppColors.surfaceElevated,
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Text(
                   'Customer Concern: "${ticket.notes}"',
-                  style: const TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     fontStyle: FontStyle.italic,
-                    color: AppColors.textPrimary,
+                    color: AppColors.textBody,
                   ),
                 ),
               ),
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAssignedMechanicCard(TicketModel ticket) {
+    final mechanicName = ticket.leadMechanicName;
+    final specialization = ticket.leadMechanicSpecialization ?? ticket.leadMechanic?.profile?.specialization;
+    final avatarUrl = ticket.leadMechanicAvatar ?? ticket.leadMechanic?.profile?.avatarUrl;
+    final bio = ticket.leadMechanic?.profile?.bio;
+    final hasMechanic = mechanicName != null && mechanicName.isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated, // #FDF6F5
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: AppColors.surface,
+            backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
+                ? NetworkImage(avatarUrl)
+                : null,
+            child: (avatarUrl == null || avatarUrl.isEmpty)
+                ? Icon(
+                    hasMechanic ? Icons.engineering : Icons.person_search,
+                    color: AppColors.primary,
+                    size: 24,
+                  )
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      hasMechanic ? 'Assigned Mechanic' : 'Technician Allocation',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    if (hasMechanic) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.verified, size: 10, color: AppColors.primary),
+                            const SizedBox(width: 3),
+                            Text(
+                              'Verified Pro',
+                              style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.primary),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  hasMechanic ? mechanicName : 'Pending Assignment',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                if (hasMechanic && specialization != null && specialization.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      specialization,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppColors.textBody,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  )
+                else if (!hasMechanic)
+                  Text(
+                    'Our workshop supervisor is assigning a specialist technician.',
+                    style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary),
+                  ),
+                if (bio != null && bio.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      bio,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(fontSize: 11, fontStyle: FontStyle.italic, color: AppColors.textSecondary),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -182,11 +352,11 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          style: GoogleFonts.spaceGrotesk(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         ),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -197,45 +367,46 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.statusPendingApproval.withValues(alpha: 0.12),
+        color: AppColors.surfaceElevated, // #FDF6F5
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.statusPendingApproval),
+        border: Border.all(color: AppColors.primary, width: 1.2), // Navy emphasis
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.notification_important, color: AppColors.statusPendingApproval),
-              SizedBox(width: 8),
+              const Icon(Icons.notification_important_outlined, color: AppColors.primary),
+              const SizedBox(width: 8),
               Text(
                 'Customer Action Required',
-                style: TextStyle(
+                style: GoogleFonts.spaceGrotesk(
                   fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.statusPendingApproval,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Vehicle inspection has concluded. Please inspect diagnosed items and authorize or reject repairs individually.',
-            style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
+          Text(
+            'Vehicle inspection has concluded. Please inspect diagnosed items and authorize or decline repairs individually.',
+            style: GoogleFonts.inter(fontSize: 13, color: AppColors.textBody),
           ),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent, // #F97316
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.primary, // Solid Navy #1A1D29
+                foregroundColor: AppColors.background, // Cream #F9EBEA
                 padding: const EdgeInsets.symmetric(vertical: 12),
+                elevation: 0,
               ),
-              icon: const Icon(Icons.touch_app, size: 18),
-              label: const Text(
+              icon: const Icon(Icons.touch_app, size: 18, color: AppColors.background),
+              label: Text(
                 'Review & Authorize Repairs',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
               ),
               onPressed: () => ItemApprovalDialog.show(context, ticket),
             ),
@@ -247,8 +418,28 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
 
   Widget _buildRepairChecklist(TicketModel ticket) {
     final items = ticket.items;
+    _syncDecisions(items);
+
+    final pendingItems = items.where((i) => i.isPending).toList();
+    final hasPending = pendingItems.isNotEmpty;
+
+    int approvedPendingCount = 0;
+    double approvedPendingTotal = 0.0;
+    for (var item in pendingItems) {
+      if ((_itemDecisions[item.id] ?? 'APPROVED') == 'APPROVED') {
+        approvedPendingCount++;
+        approvedPendingTotal += item.totalPrice;
+      }
+    }
+    final allSelected = hasPending && approvedPendingCount == pendingItems.length;
 
     return Card(
+      color: AppColors.surface, // #FFFFFF
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.border),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -257,33 +448,76 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.checklist, color: AppColors.primary),
-                    SizedBox(width: 8),
+                    const Icon(Icons.checklist_rtl_rounded, color: AppColors.primary),
+                    const SizedBox(width: 8),
                     Text(
-                      'Repair Tasks & Parts Checklist',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      'DIAGNOSED REPAIRS & ESTIMATES',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
                     ),
                   ],
                 ),
                 Text(
-                  '${ticket.completedItemsCount}/${ticket.approvedItemsCount} Done',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
+                  '${items.length} item(s)',
+                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
                 ),
               ],
             ),
-            const Divider(),
+            const SizedBox(height: 12),
+            if (hasPending) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 16, color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Items awaiting your decision before work starts:',
+                        style: GoogleFonts.inter(fontSize: 12, color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          final newStatus = allSelected ? 'REJECTED' : 'APPROVED';
+                          for (var pi in pendingItems) {
+                            _itemDecisions[pi.id] = newStatus;
+                          }
+                        });
+                      },
+                      child: Text(
+                        allSelected ? 'Uncheck All' : 'Select All',
+                        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (items.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
                 child: Text(
                   'No repair items listed yet.',
-                  style: TextStyle(color: AppColors.textSecondary),
+                  style: GoogleFonts.inter(color: AppColors.textSecondary),
                 ),
               )
             else
@@ -291,111 +525,794 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: items.length,
-                separatorBuilder: (_, _) => const Divider(height: 16),
+                separatorBuilder: (_, _) => const Divider(height: 16, color: AppColors.border),
                 itemBuilder: (context, index) {
                   final item = items[index];
                   final isDone = item.isCompleted;
+                  final isPending = item.isPending;
+                  final isApprovedDecision = (_itemDecisions[item.id] ?? (isPending ? 'APPROVED' : item.approvalStatus)) == 'APPROVED';
 
-                  return Row(
-                    children: [
-                      // Completion Icon
-                      Container(
-                        width: 26,
-                        height: 26,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isDone
-                              ? AppColors.success
-                              : item.isApproved
-                                  ? AppColors.statusApprovedInProgress.withValues(alpha: 0.15)
-                                  : Colors.grey.shade200,
-                        ),
-                        child: Center(
-                          child: Icon(
-                            isDone ? Icons.check : (item.isApproved ? Icons.timelapse : Icons.remove),
-                            size: 16,
-                            color: isDone
-                                ? Colors.white
-                                : item.isApproved
-                                    ? AppColors.statusApprovedInProgress
-                                    : Colors.grey,
-                          ),
-                        ),
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: isPending
+                          ? (isApprovedDecision
+                              ? AppColors.surfaceElevated
+                              : AppColors.surface)
+                          : AppColors.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isPending
+                            ? (isApprovedDecision ? AppColors.primary : AppColors.border)
+                            : AppColors.border,
+                        width: isPending && isApprovedDecision ? 1.2 : 1.0,
                       ),
-                      const SizedBox(width: 12),
-                      // Description
-                      Expanded(
-                        child: Column(
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () => _showItemDetailModal(context, item, ticket),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              item.description,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                decoration: item.isRejected ? TextDecoration.lineThrough : null,
-                                color: item.isRejected
-                                    ? AppColors.textSecondary
-                                    : AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${item.type} • Qty: ${item.quantity}',
-                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                            ),
-                            if (item.mechanicNotes.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: AppColors.border),
+                            // Left: Checkbox (if pending) or Status Circle (if decided/completed)
+                            if (isPending)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8, top: 2),
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Checkbox(
+                                    value: isApprovedDecision,
+                                    activeColor: AppColors.primary,
+                                    checkColor: AppColors.background,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                    onChanged: (bool? checked) {
+                                      setState(() {
+                                        _itemDecisions[item.id] = (checked == true) ? 'APPROVED' : 'REJECTED';
+                                      });
+                                    },
+                                  ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.handyman_outlined, size: 12, color: AppColors.primary),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        'Tech note: ${item.mechanicNotes}',
-                                        style: const TextStyle(fontSize: 11, color: AppColors.textPrimary, fontStyle: FontStyle.italic),
+                              )
+                            else
+                              Padding(
+                                padding: const EdgeInsets.only(right: 10, top: 4),
+                                child: Container(
+                                  width: 26,
+                                  height: 26,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isDone
+                                        ? AppColors.primary
+                                        : item.isApproved
+                                            ? AppColors.surfaceElevated
+                                            : AppColors.surface,
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: Center(
+                                    child: Icon(
+                                      isDone ? Icons.check : (item.isApproved ? Icons.timelapse : Icons.remove),
+                                      size: 16,
+                                      color: isDone
+                                          ? AppColors.background
+                                          : item.isApproved
+                                              ? AppColors.primary
+                                              : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            // Description & Details
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.surfaceElevated,
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: AppColors.border),
+                                        ),
+                                        child: Text(
+                                          item.type,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          item.description,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            decoration: (!isPending && item.isRejected) ? TextDecoration.lineThrough : null,
+                                            color: (!isPending && item.isRejected)
+                                                ? AppColors.textSecondary
+                                                : AppColors.textPrimary,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Qty: ${item.quantity} • Unit: \$${item.unitPrice.toStringAsFixed(2)}',
+                                        style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text('•', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'See details >',
+                                        style: GoogleFonts.inter(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600),
+                                      ),
+                                    ],
+                                  ),
+                                  if (item.mechanicNotes.isNotEmpty) ...[
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surfaceElevated,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: AppColors.border),
+                                      ),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Padding(
+                                            padding: EdgeInsets.only(top: 1.5),
+                                            child: Icon(Icons.handyman_outlined, size: 12, color: AppColors.primary),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Expanded(
+                                            child: Text(
+                                              'Tech note: ${item.mechanicNotes}',
+                                              style: GoogleFonts.inter(fontSize: 11, color: AppColors.textBody, fontStyle: FontStyle.italic),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
-                                ),
+                                ],
                               ),
-                            ],
+                            ),
+                            const SizedBox(width: 10),
+                            // Price & Badge / Choice Action
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '\$${item.totalPrice.toStringAsFixed(2)}',
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                if (isPending)
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        _itemDecisions[item.id] = isApprovedDecision ? 'REJECTED' : 'APPROVED';
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: isApprovedDecision
+                                            ? AppColors.primary // Solid navy
+                                            : Colors.transparent, // Silver outline
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: isApprovedDecision ? AppColors.primary : AppColors.accent,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            isApprovedDecision ? Icons.check : Icons.close,
+                                            size: 11,
+                                            color: isApprovedDecision ? AppColors.background : AppColors.textSecondary,
+                                          ),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            isApprovedDecision ? 'APPROVE' : 'DECLINE',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 10,
+                                              fontWeight: isApprovedDecision ? FontWeight.w700 : FontWeight.w600,
+                                              color: isApprovedDecision ? AppColors.background : AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  StatusBadge(
+                                    status: item.approvalStatus,
+                                    fontSize: 10,
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
-                      // Price & Badge
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                    ),
+                  );
+                },
+              ),
+            if (hasPending) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceElevated, // #FDF6F5
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Authorize Selected Repairs',
+                              style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
+                            ),
+                            Text(
+                              '$approvedPendingCount of ${pendingItems.length} repair(s) marked for approval',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('Selected Total', style: GoogleFonts.inter(fontSize: 10, color: AppColors.textSecondary)),
+                            Text(
+                              '\$${approvedPendingTotal.toStringAsFixed(2)}',
+                              style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary, // Solid Navy #1A1D29
+                        foregroundColor: AppColors.background, // Cream #F9EBEA
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        elevation: 0,
+                      ),
+                      icon: _isSubmitting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
+                            )
+                          : const Icon(Icons.send_rounded, size: 18, color: AppColors.background),
+                      label: Text(
+                        _isSubmitting
+                            ? 'Sending to Technician...'
+                            : (approvedPendingCount > 0
+                                ? 'Send Choices to Technician & Start Work'
+                                : 'Send Decisions (Decline Selected)'),
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
+                      ),
+                      onPressed: _isSubmitting ? null : () => _sendChoicesToTechnician(ticket),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _sendChoicesToTechnician(TicketModel ticket) async {
+    final pendingItems = ticket.items.where((i) => i.isPending).toList();
+    if (pendingItems.isEmpty) return;
+
+    final approvals = pendingItems.map((item) {
+      final status = _itemDecisions[item.id] ?? 'APPROVED';
+      return {'item_id': item.id, 'status': status};
+    }).toList();
+
+    final approvedList = approvals.where((a) => a['status'] == 'APPROVED').toList();
+    final rejectedList = approvals.where((a) => a['status'] == 'REJECTED').toList();
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: AppColors.border),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.send_rounded, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(
+              'Send Authorization',
+              style: GoogleFonts.spaceGrotesk(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Submit repair decisions for Ticket #${ticket.ticketNumber}?',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 12),
+            if (approvedList.isNotEmpty)
+              Text(
+                '✓ ${approvedList.length} repair item(s) approved to start work',
+                style: GoogleFonts.inter(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            if (rejectedList.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                '✕ ${rejectedList.length} repair item(s) declined',
+                style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 13),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Text(
+              'The technician will be notified immediately to proceed with approved work.',
+              style: GoogleFonts.inter(fontSize: 12, color: AppColors.textBody),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Back', style: GoogleFonts.inter(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.background,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Confirm & Send', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+    if (!mounted) return;
+
+    setState(() => _isSubmitting = true);
+    try {
+      final provider = Provider.of<TicketProvider>(context, listen: false);
+      await provider.batchApproveItems(ticket.id, approvals);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              approvedList.isNotEmpty
+                  ? 'Your authorization was sent to the technician! Repairs are now in progress.'
+                  : 'Your repair decisions have been submitted to the workshop.',
+              style: GoogleFonts.inter(color: AppColors.background),
+            ),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to submit: $e', style: GoogleFonts.inter(color: AppColors.background)),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  void _showItemDetailModal(BuildContext context, TicketItemModel item, TicketModel ticket) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          final isPending = item.isPending;
+          final currentDecision = _itemDecisions[item.id] ?? (isPending ? 'APPROVED' : item.approvalStatus);
+          final isApproved = currentDecision == 'APPROVED';
+
+          return Container(
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              border: Border(
+                top: BorderSide(color: AppColors.border),
+                left: BorderSide(color: AppColors.border),
+                right: BorderSide(color: AppColors.border),
+              ),
+            ),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+              left: 20,
+              right: 20,
+              top: 12,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Drag handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                // Title and Type
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceElevated,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Icon(
+                        item.type == 'PART' ? Icons.extension_outlined : Icons.engineering_outlined,
+                        color: AppColors.primary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '\$${item.totalPrice.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
+                            item.description,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          StatusBadge(
-                            status: item.approvalStatus,
-                            fontSize: 10,
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${item.type} • Ticket #${ticket.ticketNumber}',
+                            style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                      onPressed: () => Navigator.pop(modalCtx),
+                    ),
+                  ],
+                ),
+                const Divider(height: 24, color: AppColors.border),
+                // Pricing Breakdown
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Unit Price:', style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 13)),
+                          Text('\$${item.unitPrice.toStringAsFixed(2)}', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Quantity:', style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 13)),
+                          Text('${item.quantity}', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+                        ],
+                      ),
+                      const Divider(height: 16, color: AppColors.border),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Total Estimated Cost:', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
+                          Text(
+                            '\$${item.totalPrice.toStringAsFixed(2)}',
+                            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 18, color: AppColors.textPrimary),
                           ),
                         ],
                       ),
                     ],
-                  );
-                },
-              ),
-          ],
-        ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Diagnostic Findings
+                Text('Technician Diagnostic Findings', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary)),
+                const SizedBox(height: 6),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.handyman_outlined, color: AppColors.primary, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          item.mechanicNotes.isNotEmpty
+                              ? item.mechanicNotes
+                              : 'No specific findings logged for this repair item.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: item.mechanicNotes.isNotEmpty ? AppColors.textBody : AppColors.textSecondary,
+                            fontStyle: item.mechanicNotes.isNotEmpty ? FontStyle.normal : FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (ticket.photos.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      side: const BorderSide(color: AppColors.accent),
+                      foregroundColor: AppColors.primary,
+                    ),
+                    icon: const Icon(Icons.photo_library_outlined, size: 16, color: AppColors.primary),
+                    label: Text('View Inspection Photos (${ticket.photos.length})', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                    onPressed: () {
+                      Navigator.pop(modalCtx);
+                      PhotoGalleryModal.show(context, ticket.photos);
+                    },
+                  ),
+                ],
+                const SizedBox(height: 16),
+                // Decision Section
+                if (isPending) ...[
+                  Text('Your Authorization Choice', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            setModalState(() {});
+                            setState(() {
+                              _itemDecisions[item.id] = 'APPROVED';
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isApproved ? AppColors.surfaceElevated : AppColors.surface,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isApproved ? AppColors.primary : AppColors.border,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      isApproved ? Icons.check_circle : Icons.radio_button_unchecked,
+                                      color: isApproved ? AppColors.primary : AppColors.textSecondary,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Approve',
+                                      style: GoogleFonts.inter(
+                                        fontWeight: FontWeight.w700,
+                                        color: isApproved ? AppColors.primary : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Authorize repair for \$${item.totalPrice.toStringAsFixed(2)}',
+                                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            setModalState(() {});
+                            setState(() {
+                              _itemDecisions[item.id] = 'REJECTED';
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: !isApproved ? AppColors.surfaceElevated : AppColors.surface,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: !isApproved ? AppColors.accent : AppColors.border,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      !isApproved ? Icons.cancel : Icons.radio_button_unchecked,
+                                      color: !isApproved ? AppColors.primary : AppColors.textSecondary,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Decline',
+                                      style: GoogleFonts.inter(
+                                        fontWeight: FontWeight.w700,
+                                        color: !isApproved ? AppColors.primary : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Do not perform this repair now',
+                                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.accent),
+                            foregroundColor: AppColors.primary,
+                          ),
+                          onPressed: () => Navigator.pop(modalCtx),
+                          child: Text('Save Choice', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.background,
+                          ),
+                          icon: const Icon(Icons.send_rounded, size: 16, color: AppColors.background),
+                          label: Text('Send to Tech', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                          onPressed: () {
+                            Navigator.pop(modalCtx);
+                            _sendChoicesToTechnician(ticket);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  // Item already determined
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          item.isApproved ? Icons.check_circle : Icons.cancel,
+                          color: item.isApproved ? AppColors.primary : AppColors.textSecondary,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            item.isApproved
+                                ? 'This repair has been authorized. Status: ${item.isCompleted ? 'Completed' : 'In Progress'}.'
+                                : 'This repair was declined by customer.',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textBody,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.background,
+                      ),
+                      onPressed: () => Navigator.pop(modalCtx),
+                      child: Text('Close', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -404,6 +1321,12 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
     final photoCount = ticket.photos.length;
 
     return Card(
+      color: AppColors.surface, // #FFFFFF
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.border),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -419,13 +1342,13 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Visual Photo Evidence',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          style: GoogleFonts.spaceGrotesk(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                         ),
                         Text(
                           '$photoCount inspection photos attached by mechanic',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
                         ),
                       ],
                     ),
@@ -433,14 +1356,18 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                 ),
                 if (ticket.photos.isNotEmpty)
                   OutlinedButton.icon(
-                    icon: const Icon(Icons.fullscreen, size: 16),
-                    label: const Text('View All'),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.accent),
+                      foregroundColor: AppColors.primary,
+                    ),
+                    icon: const Icon(Icons.fullscreen, size: 16, color: AppColors.primary),
+                    label: Text('View All', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
                     onPressed: () => PhotoGalleryModal.show(context, ticket.photos),
                   ),
               ],
             ),
             if (ticket.photos.isNotEmpty) ...[
-              const Divider(height: 20),
+              const Divider(height: 20, color: AppColors.border),
               SizedBox(
                 height: 120,
                 child: ListView.separated(
@@ -466,8 +1393,8 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                               photo.url,
                               fit: BoxFit.cover,
                               errorBuilder: (ctx, err, stack) => Container(
-                                color: Colors.grey.shade200,
-                                child: const Icon(Icons.broken_image, color: Colors.grey),
+                                color: AppColors.surfaceElevated,
+                                child: const Icon(Icons.broken_image, color: AppColors.textSecondary),
                               ),
                             ),
                             Positioned(
@@ -476,10 +1403,10 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(3),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.6),
+                                  color: AppColors.surface.withValues(alpha: 0.85),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.zoom_in, color: Colors.white, size: 12),
+                                child: const Icon(Icons.zoom_in, color: AppColors.primary, size: 12),
                               ),
                             ),
                             Positioned(
@@ -488,12 +1415,12 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                               right: 0,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                color: Colors.black.withValues(alpha: 0.65),
+                                color: AppColors.primary.withValues(alpha: 0.85),
                                 child: Text(
                                   photo.caption.isNotEmpty ? photo.caption : photo.stageTitle,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                                  style: GoogleFonts.inter(color: AppColors.background, fontSize: 10),
                                 ),
                               ),
                             ),
@@ -516,6 +1443,12 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
     if (invoice == null) return const SizedBox.shrink();
 
     return Card(
+      color: AppColors.surface, // #FFFFFF
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.border),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -530,19 +1463,19 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                     const SizedBox(width: 8),
                     Text(
                       'Invoice • ${invoice.invoiceNumber}',
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.spaceGrotesk(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                     ),
                   ],
                 ),
                 StatusBadge(status: invoice.status, fontSize: 12),
               ],
             ),
-            const Divider(),
+            const Divider(color: AppColors.border),
             _buildInvoiceRow('Subtotal (Approved Items)', '\$${invoice.subtotal.toStringAsFixed(2)}'),
             _buildInvoiceRow('Estimated Tax', '\$${invoice.taxAmount.toStringAsFixed(2)}'),
             if (invoice.discountAmount > 0)
               _buildInvoiceRow('Discount', '-\$${invoice.discountAmount.toStringAsFixed(2)}'),
-            const Divider(),
+            const Divider(color: AppColors.border),
             _buildInvoiceRow(
               'Total Amount',
               '\$${invoice.totalAmount.toStringAsFixed(2)}',
@@ -553,13 +1486,13 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
               _buildInvoiceRow(
                 'Amount Paid',
                 '\$${invoice.amountPaid.toStringAsFixed(2)}',
-                color: AppColors.success,
+                color: AppColors.textSecondary,
               ),
             _buildInvoiceRow(
               'Balance Due',
               '\$${invoice.balanceDue.toStringAsFixed(2)}',
               isBold: true,
-              color: invoice.balanceDue > 0 ? AppColors.accent : AppColors.success,
+              color: AppColors.textPrimary,
             ),
           ],
         ),
@@ -575,18 +1508,18 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: GoogleFonts.inter(
               fontSize: fontSize,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
               color: AppColors.textSecondary,
             ),
           ),
           Text(
             value,
-            style: TextStyle(
+            style: GoogleFonts.spaceGrotesk(
               fontSize: fontSize,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-              color: color ?? (isBold ? AppColors.primary : AppColors.textPrimary),
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
+              color: color ?? (isBold ? AppColors.textPrimary : AppColors.textBody),
             ),
           ),
         ],
@@ -598,24 +1531,30 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
     final logs = ticket.statusLogs;
 
     return Card(
+      color: AppColors.surface, // #FFFFFF
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.border),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.history, color: AppColors.primary),
-                SizedBox(width: 8),
+                const Icon(Icons.history, color: AppColors.primary),
+                const SizedBox(width: 8),
                 Text(
                   'Service Audit Timeline',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.spaceGrotesk(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                 ),
               ],
             ),
-            const Divider(),
+            const Divider(color: AppColors.border),
             if (logs.isEmpty)
-              const Text('No status transitions recorded.', style: TextStyle(color: AppColors.textSecondary))
+              Text('No status transitions recorded.', style: GoogleFonts.inter(color: AppColors.textSecondary))
             else
               ListView.builder(
                 shrinkWrap: true,
@@ -643,12 +1582,12 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                             children: [
                               Text(
                                 '${AppColors.getStatusLabel(log.fromStatus)} → ${AppColors.getStatusLabel(log.toStatus)}',
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                style: GoogleFonts.spaceGrotesk(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                               ),
                               if (log.remarks.isNotEmpty)
                                 Text(
                                   log.remarks,
-                                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
                                 ),
                             ],
                           ),

@@ -45,7 +45,7 @@ class TicketProvider extends ChangeNotifier {
     wsService.connect();
   }
 
-  Future<void> fetchTickets({String? status, bool showLoading = true}) async {
+  Future<void> fetchTickets({String? status, String? search, bool showLoading = true}) async {
     if (showLoading) {
       _isLoading = true;
       _errorMessage = null;
@@ -53,7 +53,7 @@ class TicketProvider extends ChangeNotifier {
     }
 
     try {
-      _tickets = await apiService.fetchTickets(status: status);
+      _tickets = await apiService.fetchTickets(status: status, search: search);
     } catch (e) {
       _errorMessage = e.toString();
     } finally {

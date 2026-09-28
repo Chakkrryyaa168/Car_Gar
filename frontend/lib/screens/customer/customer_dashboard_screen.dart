@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../models/vehicle_model.dart';
 import '../../providers/auth_provider.dart';
@@ -6,6 +8,7 @@ import '../../providers/ticket_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/status_badge.dart';
 import 'live_tracker_screen.dart';
+import '../profile/profile_screen.dart';
 
 class CustomerDashboardScreen extends StatefulWidget {
   const CustomerDashboardScreen({super.key});
@@ -54,13 +57,31 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
     final readyCount = tickets.where((t) => t.isReadyForPickup).length;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Customer Garage Portal'),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        title: Text(
+          'Customer Garage Portal',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: AppColors.primary),
             tooltip: 'Refresh Tickets',
             onPressed: _loadData,
+          ),
+          IconButton(
+            icon: const Icon(Icons.account_circle_outlined, color: AppColors.primary),
+            tooltip: 'My Profile & Preferences',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            ),
           ),
         ],
       ),
@@ -72,22 +93,19 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome Card
+              // Welcome Card (Floats subtly on Mediterranean cream)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1E3A5F), Color(0xFF2C5282)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: AppColors.surface, // #FFFFFF
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border), // #E8DAD8
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF1E3A5F).withValues(alpha: 0.25),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      color: const Color(0xFF1A1D29).withValues(alpha: 0.03),
+                      blurRadius: 12,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -103,16 +121,16 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                             children: [
                               Text(
                                 'Hi, ${auth.currentUser?.fullName ?? 'Vehicle Owner'}',
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: GoogleFonts.spaceGrotesk(
+                                  color: AppColors.textPrimary, // #1A1D29
                                   fontSize: 22,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Track repair progress live, inspect mechanic photos, and authorize itemized costs in real time.',
-                                style: TextStyle(color: Colors.white70, fontSize: 13),
+                                style: GoogleFonts.inter(color: AppColors.textBody, fontSize: 13),
                               ),
                             ],
                           ),
@@ -120,24 +138,118 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
+                            color: AppColors.surfaceElevated, // #FDF6F5
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.border),
                           ),
-                          child: const Icon(Icons.directions_car, color: Colors.white, size: 28),
+                          child: const Icon(Icons.directions_car, color: AppColors.primary, size: 28),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
+
+                    // Unique Customer ID Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceElevated, // #FDF6F5
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: const Icon(Icons.badge_outlined, color: AppColors.primary, size: 16),
+                              ),
+                              const SizedBox(width: 10),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'MY CUSTOMER ID',
+                                    style: GoogleFonts.inter(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 10,
+                                      letterSpacing: 0.8,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    auth.currentUser?.customerCode ?? 'CG-1001',
+                                    style: GoogleFonts.spaceGrotesk(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          InkWell(
+                            onTap: () {
+                              final code = auth.currentUser?.customerCode ?? '';
+                              if (code.isNotEmpty) {
+                                Clipboard.setData(ClipboardData(text: code));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Customer ID $code copied to clipboard!', style: GoogleFonts.inter(color: AppColors.background)),
+                                    backgroundColor: AppColors.primary,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.copy, color: AppColors.primary, size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Copy ID',
+                                    style: GoogleFonts.inter(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'State this ID to the receptionist when you arrive for instant check-in.',
+                      style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 11),
+                    ),
+                    const SizedBox(height: 14),
                     Row(
                       children: [
-                        OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(color: Colors.white60),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary, // Solid navy #1A1D29
+                            foregroundColor: AppColors.background, // Cream #F9EBEA
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            elevation: 0,
                           ),
-                          icon: const Icon(Icons.add, size: 16),
-                          label: const Text('+ Add Vehicle', style: TextStyle(fontSize: 13)),
+                          icon: const Icon(Icons.add, size: 16, color: AppColors.background),
+                          label: Text('+ Add Vehicle', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
                           onPressed: _showAddVehicleDialog,
                         ),
                       ],
@@ -154,7 +266,6 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                     child: _buildMetricTile(
                       'Action Needed',
                       '$pendingCount',
-                      AppColors.statusPendingApproval,
                       Icons.warning_amber_rounded,
                     ),
                   ),
@@ -163,7 +274,6 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                     child: _buildMetricTile(
                       'In Repairs',
                       '$inProgressCount',
-                      AppColors.statusApprovedInProgress,
                       Icons.build_circle_outlined,
                     ),
                   ),
@@ -172,7 +282,6 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                     child: _buildMetricTile(
                       'Ready Pickup',
                       '$readyCount',
-                      AppColors.statusReadyForPickup,
                       Icons.car_rental,
                     ),
                   ),
@@ -182,6 +291,12 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
 
               // Registered Vehicles Card
               Card(
+                color: AppColors.surface, // #FFFFFF
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: AppColors.border),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -190,15 +305,15 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              Icon(Icons.garage_outlined, color: Color(0xFF1E3A5F), size: 20),
-                              SizedBox(width: 8),
+                              const Icon(Icons.garage_outlined, color: AppColors.primary, size: 20),
+                              const SizedBox(width: 8),
                               Text(
                                 'MY REGISTERED VEHICLES',
-                                style: TextStyle(
+                                style: GoogleFonts.spaceGrotesk(
                                   fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w700,
                                   color: AppColors.textSecondary,
                                   letterSpacing: 0.8,
                                 ),
@@ -206,8 +321,9 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                             ],
                           ),
                           TextButton.icon(
+                            style: TextButton.styleFrom(foregroundColor: AppColors.primary),
                             icon: const Icon(Icons.add_circle_outline, size: 16),
-                            label: const Text('Add Vehicle', style: TextStyle(fontSize: 12)),
+                            label: Text('Add Vehicle', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
                             onPressed: _showAddVehicleDialog,
                           ),
                         ],
@@ -219,17 +335,18 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: AppColors.background,
+                            color: AppColors.surfaceElevated,
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.border),
                           ),
-                          child: const Row(
+                          child: Row(
                             children: [
-                              Icon(Icons.info_outline, size: 18, color: AppColors.textSecondary),
-                              SizedBox(width: 10),
+                              const Icon(Icons.info_outline, size: 18, color: AppColors.textSecondary),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   'No vehicles registered yet. Tap "+ Add Vehicle" to link your car.',
-                                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
                                 ),
                               ),
                             ],
@@ -243,14 +360,14 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                             return Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1E3A5F).withValues(alpha: 0.06),
+                                color: AppColors.surfaceElevated, // #FDF6F5
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: const Color(0xFF1E3A5F).withValues(alpha: 0.15)),
+                                border: Border.all(color: AppColors.border), // #E8DAD8
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.directions_car_filled, size: 18, color: Color(0xFF1E3A5F)),
+                                  const Icon(Icons.directions_car_filled, size: 18, color: AppColors.primary),
                                   const SizedBox(width: 8),
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -258,11 +375,11 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                                     children: [
                                       Text(
                                         '${v.make} ${v.model} (${v.year})',
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary),
                                       ),
                                       Text(
                                         'Plate: ${v.licensePlate} • VIN: ${v.vin.isNotEmpty ? v.vin : 'N/A'}',
-                                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                        style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary),
                                       ),
                                     ],
                                   ),
@@ -278,11 +395,11 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
               const SizedBox(height: 20),
 
               // Service Tickets Section
-              const Text(
+              Text(
                 'YOUR SERVICE ORDERS & LIVE PROGRESS',
-                style: TextStyle(
+                style: GoogleFonts.spaceGrotesk(
                   fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.textSecondary,
                   letterSpacing: 0.8,
                 ),
@@ -298,13 +415,13 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(32),
                   alignment: Alignment.center,
-                  child: const Column(
+                  child: Column(
                     children: [
-                      Icon(Icons.directions_car_filled_outlined, size: 48, color: AppColors.textSecondary),
-                      SizedBox(height: 12),
+                      const Icon(Icons.directions_car_filled_outlined, size: 48, color: AppColors.textSecondary),
+                      const SizedBox(height: 12),
                       Text(
                         'No service tickets found for your account.',
-                        style: TextStyle(color: AppColors.textSecondary),
+                        style: GoogleFonts.inter(color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -319,8 +436,12 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                     final ticket = tickets[index];
 
                     return Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      color: AppColors.surface, // #FFFFFF
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: AppColors.border),
+                      ),
                       clipBehavior: Clip.antiAlias,
                       child: InkWell(
                         onTap: () {
@@ -343,15 +464,15 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                                       children: [
                                         Text(
                                           ticket.vehicleInfo ?? 'Vehicle',
-                                          style: const TextStyle(
+                                          style: GoogleFonts.spaceGrotesk(
                                             fontSize: 16,
-                                            fontWeight: FontWeight.bold,
+                                            fontWeight: FontWeight.w700,
                                             color: AppColors.textPrimary,
                                           ),
                                         ),
                                         Text(
                                           'Ticket #${ticket.ticketNumber} • Lead Tech: ${ticket.leadMechanicName ?? 'Assigned Workshop'}',
-                                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                          style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
                                         ),
                                       ],
                                     ),
@@ -365,40 +486,43 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: AppColors.background,
+                                    color: AppColors.surfaceElevated,
                                     borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: AppColors.border),
                                   ),
                                   child: Text(
                                     'Initial Complaint: "${ticket.notes}"',
-                                    style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.textBody),
                                   ),
-                                ],
-                              ),
-                              // Highlight Action Banner if Pending Approval
+                                ),
+                              ],
+                              // Action Banner if Pending Approval
                               if (ticket.isPendingApproval) ...[
                                 const SizedBox(height: 12),
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF97316).withValues(alpha: 0.1),
+                                    color: AppColors.surfaceElevated,
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: const Color(0xFFF97316).withValues(alpha: 0.3)),
+                                    border: Border.all(color: AppColors.primary, width: 1.2),
                                   ),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.notification_important, color: Color(0xFFF97316)),
+                                      const Icon(Icons.notification_important_outlined, color: AppColors.primary),
                                       const SizedBox(width: 10),
-                                      const Expanded(
+                                      Expanded(
                                         child: Text(
                                           'Technician diagnosis completed! Review itemized repairs and photo evidence to approve.',
-                                          style: TextStyle(fontSize: 12, color: Color(0xFFF97316), fontWeight: FontWeight.bold),
+                                          style: GoogleFonts.inter(fontSize: 12, color: AppColors.textPrimary, fontWeight: FontWeight.w600),
                                         ),
                                       ),
+                                      const SizedBox(width: 8),
                                       ElevatedButton(
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFFF97316),
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          backgroundColor: AppColors.primary,
+                                          foregroundColor: AppColors.background,
+                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                          elevation: 0,
                                         ),
                                         onPressed: () {
                                           Navigator.push(
@@ -406,7 +530,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                                             MaterialPageRoute(builder: (_) => LiveTrackerScreen(ticketId: ticket.id)),
                                           );
                                         },
-                                        child: const Text('Review', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                        child: Text('Review', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
                                       ),
                                     ],
                                   ),
@@ -419,25 +543,27 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: AppColors.success.withValues(alpha: 0.1),
+                                    color: AppColors.surfaceElevated,
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                                    border: Border.all(color: AppColors.border),
                                   ),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.check_circle_outline, color: AppColors.success),
+                                      const Icon(Icons.check_circle_outline, color: AppColors.primary),
                                       const SizedBox(width: 10),
-                                      const Expanded(
+                                      Expanded(
                                         child: Text(
                                           'All repairs complete & quality tested! Your vehicle is ready for pickup.',
-                                          style: TextStyle(fontSize: 12, color: AppColors.success, fontWeight: FontWeight.bold),
+                                          style: GoogleFonts.inter(fontSize: 12, color: AppColors.textPrimary, fontWeight: FontWeight.w600),
                                         ),
                                       ),
+                                      const SizedBox(width: 8),
                                       ElevatedButton(
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppColors.success,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          backgroundColor: AppColors.primary,
+                                          foregroundColor: AppColors.background,
+                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                          elevation: 0,
                                         ),
                                         onPressed: () {
                                           Navigator.push(
@@ -445,24 +571,24 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                                             MaterialPageRoute(builder: (_) => LiveTrackerScreen(ticketId: ticket.id)),
                                           );
                                         },
-                                        child: const Text('View Bill', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                        child: Text('View Bill', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
                                       ),
                                     ],
                                   ),
                                 ),
                               ],
 
-                              const Divider(height: 20),
+                              const Divider(height: 20, color: AppColors.border),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     children: [
-                                      const Icon(Icons.task_alt, size: 16, color: AppColors.primary),
+                                      const Icon(Icons.task_alt, size: 16, color: AppColors.textSecondary),
                                       const SizedBox(width: 6),
                                       Text(
                                         '${ticket.completedItemsCount}/${ticket.approvedItemsCount} tasks completed',
-                                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                        style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
                                       ),
                                     ],
                                   ),
@@ -470,16 +596,18 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                                     children: [
                                       Text(
                                         'Total: \$${ticket.totalEstimatedAmount.toStringAsFixed(2)}',
-                                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 14),
+                                        style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, color: AppColors.textPrimary, fontSize: 14),
                                       ),
                                       const SizedBox(width: 10),
                                       ElevatedButton.icon(
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF1E3A5F),
+                                          backgroundColor: AppColors.primary,
+                                          foregroundColor: AppColors.background,
                                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          elevation: 0,
                                         ),
-                                        icon: const Icon(Icons.visibility, size: 14),
-                                        label: const Text('Live Tracker', style: TextStyle(fontSize: 12)),
+                                        icon: const Icon(Icons.visibility, size: 14, color: AppColors.background),
+                                        label: Text('Live Tracker', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
                                         onPressed: () {
                                           Navigator.push(
                                             context,
@@ -492,15 +620,15 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              const Row(
+                              Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   Text(
                                     'Click card to see mechanic findings & detail',
-                                    style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
+                                    style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
                                   ),
-                                  SizedBox(width: 4),
-                                  Icon(Icons.arrow_forward, size: 12, color: AppColors.primary),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.arrow_forward, size: 12, color: AppColors.textSecondary),
                                 ],
                               ),
                             ],
@@ -517,25 +645,40 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
     );
   }
 
-  Widget _buildMetricTile(String label, String value, Color color, IconData icon) {
+  Widget _buildMetricTile(String label, String value, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface, // #FFFFFF
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.border), // #E8DAD8
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1A1D29).withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceElevated,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 20),
+          ),
+          const SizedBox(height: 8),
           Text(
             value,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+            style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
+          const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
             textAlign: TextAlign.center,
           ),
         ],
@@ -554,39 +697,84 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Row(
+        backgroundColor: AppColors.surface, // #FFFFFF
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: AppColors.border),
+        ),
+        title: Row(
           children: [
-            Icon(Icons.directions_car, color: Color(0xFF1E3A5F)),
-            SizedBox(width: 8),
-            Text('Register Customer Vehicle'),
+            const Icon(Icons.directions_car, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(
+              'Register Customer Vehicle',
+              style: GoogleFonts.spaceGrotesk(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+              ),
+            ),
           ],
         ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: plateCtrl, decoration: const InputDecoration(labelText: 'License Plate')),
+              TextField(
+                controller: plateCtrl,
+                decoration: const InputDecoration(labelText: 'License Plate'),
+              ),
               const SizedBox(height: 10),
-              TextField(controller: makeCtrl, decoration: const InputDecoration(labelText: 'Make (e.g. Honda)')),
+              TextField(
+                controller: makeCtrl,
+                decoration: const InputDecoration(labelText: 'Make (e.g. Honda)'),
+              ),
               const SizedBox(height: 10),
-              TextField(controller: modelCtrl, decoration: const InputDecoration(labelText: 'Model (e.g. CR-V)')),
+              TextField(
+                controller: modelCtrl,
+                decoration: const InputDecoration(labelText: 'Model (e.g. CR-V)'),
+              ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(child: TextField(controller: yearCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Year'))),
+                  Expanded(
+                    child: TextField(
+                      controller: yearCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Year'),
+                    ),
+                  ),
                   const SizedBox(width: 10),
-                  Expanded(child: TextField(controller: colorCtrl, decoration: const InputDecoration(labelText: 'Color'))),
+                  Expanded(
+                    child: TextField(
+                      controller: colorCtrl,
+                      decoration: const InputDecoration(labelText: 'Color'),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
-              TextField(controller: vinCtrl, decoration: const InputDecoration(labelText: 'VIN Number (17 chars)')),
+              TextField(
+                controller: vinCtrl,
+                decoration: const InputDecoration(labelText: 'VIN Number (17 chars)'),
+              ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancel')),
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.accent),
+              foregroundColor: AppColors.textBody,
+            ),
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: Text('Cancel', style: GoogleFonts.inter()),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E3A5F)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.background,
+            ),
             onPressed: () async {
               final api = Provider.of<TicketProvider>(context, listen: false).apiService;
               final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -604,21 +792,24 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                 _loadVehicles();
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Vehicle successfully registered to your account!'),
-                      backgroundColor: AppColors.success,
+                    SnackBar(
+                      content: Text('Vehicle successfully registered to your account!', style: GoogleFonts.inter(color: AppColors.background)),
+                      backgroundColor: AppColors.primary,
                     ),
                   );
                 }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.danger),
+                    SnackBar(
+                      content: Text('Error: $e', style: GoogleFonts.inter(color: AppColors.background)),
+                      backgroundColor: AppColors.primary,
+                    ),
                   );
                 }
               }
             },
-            child: const Text('Save Vehicle'),
+            child: Text('Save Vehicle', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
           ),
         ],
       ),

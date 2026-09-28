@@ -43,7 +43,10 @@ class TicketModel {
   final UserModel? leadMechanic;
   final String? customerName;
   final String? customerPhone;
+  final String? customerCode;
   final String? leadMechanicName;
+  final String? leadMechanicSpecialization;
+  final String? leadMechanicAvatar;
   final String? receptionistName;
   String currentStatus;
   final int mileageIn;
@@ -68,7 +71,10 @@ class TicketModel {
     this.leadMechanic,
     this.customerName,
     this.customerPhone,
+    this.customerCode,
     this.leadMechanicName,
+    this.leadMechanicSpecialization,
+    this.leadMechanicAvatar,
     this.receptionistName,
     required this.currentStatus,
     required this.mileageIn,
@@ -131,7 +137,10 @@ class TicketModel {
       leadMechanic: mechanicObj,
       customerName: json['customer_name'] ?? customerObj?.fullName,
       customerPhone: json['customer_phone'] ?? customerObj?.phoneNumber,
+      customerCode: json['customer_code'] ?? customerObj?.customerCode,
       leadMechanicName: json['lead_mechanic_name'] ?? mechanicObj?.fullName,
+      leadMechanicSpecialization: json['lead_mechanic_specialization'] ?? mechanicObj?.profile?.specialization,
+      leadMechanicAvatar: json['lead_mechanic_avatar'] ?? mechanicObj?.profile?.avatarUrl,
       receptionistName: json['receptionist_name'],
       currentStatus: json['current_status'] ?? 'CHECKED_IN',
       mileageIn: parseInt(json['mileage_in'], 0),
@@ -155,4 +164,20 @@ class TicketModel {
   bool get isReadyForPickup => currentStatus == 'READY_FOR_PICKUP';
   bool get isPaidAndClosed => currentStatus == 'PAID_AND_CLOSED';
   bool get isWorkCompleted => currentStatus == 'WORK_COMPLETED';
+
+  double get estimatedTotal {
+    if (totalEstimatedAmount > 0) return totalEstimatedAmount;
+    return items.fold(0.0, (sum, item) => sum + item.totalPrice);
+  }
+
+  bool get isAllApprovedItemsCompleted {
+    if (approvedItemsCount > 0 && completedItemsCount >= approvedItemsCount) {
+      return true;
+    }
+    final approved = items.where((i) => i.isApproved).toList();
+    if (approved.isNotEmpty) {
+      return approved.every((i) => i.isCompleted);
+    }
+    return false;
+  }
 }

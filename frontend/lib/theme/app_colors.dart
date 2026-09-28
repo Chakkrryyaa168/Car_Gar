@@ -1,34 +1,54 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand & Foundation
-  static const Color primary = Color(0xFF1E3A5F); // Deep Steel Blue
-  static const Color accent = Color(0xFFF97316);  // Safety Orange
-  static const Color background = Color(0xFFF8FAFC); // Near-white Gray
-  static const Color surface = Color(0xFFFFFFFF);    // Pure White
-  static const Color textPrimary = Color(0xFF1E293B); // Slate Dark
-  static const Color textSecondary = Color(0xFF64748B); // Slate Muted
-  static const Color border = Color(0xFFE2E8F0);
+  // Soft, Calm Light Palette (Mediterranean Cream + Moody Navy + Silver-Gray)
+  static const Color background = Color(0xFFF9EBEA); // Warm mediterranean cream (main app background)
+  static const Color surface = Color(0xFFFFFFFF); // Pure white cards sitting on cream
+  static const Color surfaceElevated = Color(0xFFFDF6F5); // Barely lifted off cream
+  static const Color surfaceMuted = Color(0xFFF5E4E2); // Subtly deeper cream for badges/chips
 
-  // Status Badge Colors (Mapped to ticket_status)
-  static const Color statusCheckedIn = Color(0xFF94A3B8);
-  static const Color statusInspecting = Color(0xFF3B82F6);
-  static const Color statusPendingApproval = Color(0xFFF59E0B);
-  static const Color statusApprovedInProgress = Color(0xFF6366F1);
-  static const Color statusWorkCompleted = Color(0xFF14B8A6);
-  static const Color statusReadyForPickup = Color(0xFFF97316);
-  static const Color statusPaidAndClosed = Color(0xFF22C55E);
-  static const Color statusCancelled = Color(0xFFEF4444);
+  // Primary & Text Emphasis (Moody Navy-Black)
+  static const Color primary = Color(0xFF1A1D29); // Moody navy-black for headings, primary buttons, active states, icons
+  static const Color textPrimary = Color(0xFF1A1D29); // Headings, titles, active emphasis
+  static const Color textBody = Color(0xFF2E313D); // Softened navy, not pure black (body text)
+  static const Color textSecondary = Color(0xFF8A8B8F); // Muted text for readability on cream
+  static const Color textMuted = Color(0xFF8A8B8F); // Muted silver-gray
 
-  // Semantic & Inventory Colors
-  static const Color success = Color(0xFF22C55E);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color danger = Color(0xFFEF4444);
-  static const Color info = Color(0xFF3B82F6);
+  // Secondary / Accent (Silver-gray)
+  static const Color accent = Color(0xFFB1B2B5); // Silver-gray (borders, inactive icons, dividers)
+  static const Color secondary = Color(0xFFB1B2B5); // Silver-gray
 
-  // Inventory Out-of-Stock
-  static const Color outOfStockBg = Color(0xFFFEE2E2);
-  static const Color outOfStockText = Color(0xFFEF4444);
+  // Borders & Dividers
+  static const Color border = Color(0xFFE8DAD8); // Soft warm gray, blends with the cream background
+  static const Color borderFaint = Color(0xFFF0E5E3); // Barely visible border
+
+  // Grounded Top Bar (Navy + Cream)
+  static const Color topBarBackground = Color(0xFF1A1D29); // Grounded navy background
+  static const Color topBarSurface = Color(0xFF252A3A); // Slightly lifted navy on top bar
+  static const Color topBarText = Color(0xFFF9EBEA); // Cream / near-white on top bar
+  static const Color topBarMuted = Color(0xFFB1B2B5); // Silver text on top bar
+  static const Color topBarBorder = Color(0xFF2E3242); // Navy divider on top bar
+
+  // Tonal Navy vs. Silver Scale for States (NO orange, green, red, amber)
+  // Contrast, weight, and opacity indicate status
+  static const Color statusCheckedIn = Color(0xFF8A8B8F);
+  static const Color statusInspecting = Color(0xFF2E313D);
+  static const Color statusPendingApproval = Color(0xFF1A1D29);
+  static const Color statusApprovedInProgress = Color(0xFF1A1D29);
+  static const Color statusWorkCompleted = Color(0xFF2E313D);
+  static const Color statusReadyForPickup = Color(0xFF1A1D29);
+  static const Color statusPaidAndClosed = Color(0xFF8A8B8F);
+  static const Color statusCancelled = Color(0xFFB1B2B5);
+
+  // Semantic mappings (Restrained, calm, desaturated)
+  static const Color success = Color(0xFF1A1D29);
+  static const Color warning = Color(0xFF2E313D);
+  static const Color danger = Color(0xFF8A8B8F);
+  static const Color info = Color(0xFF1A1D29);
+
+  // Inventory semantic tags
+  static const Color outOfStockBg = Color(0xFFFDF6F5);
+  static const Color outOfStockText = Color(0xFF8A8B8F);
 
   // Helper method to retrieve color for any ticket status string
   static Color getStatusColor(String? status) {

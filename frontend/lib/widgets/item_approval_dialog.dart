@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/ticket_model.dart';
 import '../providers/ticket_provider.dart';
@@ -50,8 +51,12 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      backgroundColor: AppColors.surface, // #FFFFFF
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.border), // #E8DAD8
+      ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
         child: Column(
@@ -60,29 +65,30 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
-                color: AppColors.primary,
+                color: AppColors.surfaceElevated, // #FDF6F5
                 borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                border: Border(bottom: BorderSide(color: AppColors.border)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.rate_review_outlined, color: Colors.white, size: 24),
+                  const Icon(Icons.rate_review_outlined, color: AppColors.primary, size: 24),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Review Diagnosed Repairs',
-                          style: TextStyle(
-                            color: Colors.white,
+                          style: GoogleFonts.spaceGrotesk(
+                            color: AppColors.textPrimary,
                             fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         Text(
                           'Ticket ${widget.ticket.ticketNumber} • ${widget.ticket.vehicleInfo}',
-                          style: const TextStyle(
-                            color: Colors.white70,
+                          style: GoogleFonts.inter(
+                            color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
                         ),
@@ -90,7 +96,7 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
+                    icon: const Icon(Icons.close, color: AppColors.textSecondary),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -99,16 +105,16 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
 
             // Instruction Banner
             Container(
-              color: AppColors.statusPendingApproval.withValues(alpha: 0.1),
+              color: AppColors.surfaceElevated,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppColors.statusPendingApproval, size: 18),
-                  SizedBox(width: 8),
+                  const Icon(Icons.info_outline, color: AppColors.textSecondary, size: 18),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Please approve or reject each diagnosed repair item below before technicians begin work.',
-                      style: TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                      'Please approve or decline each diagnosed repair item below before technicians begin work.',
+                      style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ),
                 ],
@@ -130,15 +136,11 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                   return Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isApproved ? AppColors.surfaceElevated : AppColors.surface,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isApproved
-                            ? AppColors.accent.withValues(alpha: 0.6)
-                            : isRejected
-                                ? AppColors.danger.withValues(alpha: 0.5)
-                                : AppColors.border,
-                        width: isApproved || isRejected ? 1.5 : 1.0,
+                        color: isApproved ? AppColors.primary : AppColors.border,
+                        width: isApproved ? 1.5 : 1.0,
                       ),
                     ),
                     child: Column(
@@ -150,16 +152,16 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: (item.type == 'PART' ? Colors.blue : Colors.purple)
-                                    .withValues(alpha: 0.1),
+                                color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: AppColors.border),
                               ),
                               child: Text(
                                 item.type,
-                                style: TextStyle(
+                                style: GoogleFonts.inter(
                                   fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: item.type == 'PART' ? Colors.blue.shade700 : Colors.purple.shade700,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                             ),
@@ -167,19 +169,20 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                             Expanded(
                               child: Text(
                                 item.description,
-                                style: const TextStyle(
+                                style: GoogleFonts.inter(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
+                                  decoration: isRejected ? TextDecoration.lineThrough : null,
+                                  color: isRejected ? AppColors.textSecondary : AppColors.textPrimary,
                                 ),
                               ),
                             ),
                             Text(
                               '\$${item.totalPrice.toStringAsFixed(2)}',
-                              style: const TextStyle(
+                              style: GoogleFonts.spaceGrotesk(
                                 fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                           ],
@@ -188,7 +191,7 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                           const SizedBox(height: 6),
                           Text(
                             'Technician Note: ${item.mechanicNotes}',
-                            style: const TextStyle(
+                            style: GoogleFonts.inter(
                               fontSize: 12,
                               color: AppColors.textSecondary,
                               fontStyle: FontStyle.italic,
@@ -196,17 +199,17 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                           ),
                         ],
                         const SizedBox(height: 12),
-                        // Approve & Reject Buttons with Exact Design System Colors:
-                        // Approve: #F97316 (Safety Orange)
-                        // Reject: #EF4444 (Rose Red)
                         Row(
                           children: [
                             Expanded(
                               child: ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: isApproved ? AppColors.accent : Colors.white,
-                                  foregroundColor: isApproved ? Colors.white : AppColors.accent,
-                                  side: const BorderSide(color: AppColors.accent, width: 1.5),
+                                  backgroundColor: isApproved ? AppColors.primary : AppColors.surface,
+                                  foregroundColor: isApproved ? AppColors.background : AppColors.textSecondary,
+                                  side: BorderSide(
+                                    color: isApproved ? AppColors.primary : AppColors.accent,
+                                    width: isApproved ? 1.5 : 1.0,
+                                  ),
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   padding: const EdgeInsets.symmetric(vertical: 8),
@@ -214,8 +217,14 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                                 icon: Icon(
                                   isApproved ? Icons.check_circle : Icons.check_circle_outline,
                                   size: 16,
+                                  color: isApproved ? AppColors.background : AppColors.textSecondary,
                                 ),
-                                label: const Text('Approve', style: TextStyle(fontWeight: FontWeight.bold)),
+                                label: Text(
+                                  'Approve',
+                                  style: GoogleFonts.inter(
+                                    fontWeight: isApproved ? FontWeight.w700 : FontWeight.w600,
+                                  ),
+                                ),
                                 onPressed: () {
                                   setState(() {
                                     _decisions[item.id] = 'APPROVED';
@@ -225,20 +234,28 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isRejected ? AppColors.danger : Colors.white,
-                                  foregroundColor: isRejected ? Colors.white : AppColors.danger,
-                                  side: const BorderSide(color: AppColors.danger, width: 1.5),
-                                  elevation: 0,
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: isRejected ? AppColors.surfaceElevated : Colors.transparent,
+                                  foregroundColor: isRejected ? AppColors.primary : AppColors.textSecondary,
+                                  side: BorderSide(
+                                    color: isRejected ? AppColors.accent : AppColors.border,
+                                    width: isRejected ? 1.5 : 1.0,
+                                  ),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   padding: const EdgeInsets.symmetric(vertical: 8),
                                 ),
                                 icon: Icon(
                                   isRejected ? Icons.cancel : Icons.cancel_outlined,
                                   size: 16,
+                                  color: isRejected ? AppColors.primary : AppColors.textSecondary,
                                 ),
-                                label: const Text('Reject', style: TextStyle(fontWeight: FontWeight.bold)),
+                                label: Text(
+                                  'Decline',
+                                  style: GoogleFonts.inter(
+                                    fontWeight: isRejected ? FontWeight.w700 : FontWeight.w600,
+                                  ),
+                                ),
                                 onPressed: () {
                                   setState(() {
                                     _decisions[item.id] = 'REJECTED';
@@ -259,7 +276,7 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surfaceElevated, // #FDF6F5
                 borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
                 border: Border(top: BorderSide(color: AppColors.border)),
               ),
@@ -268,9 +285,9 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Total for Approved Items:',
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           fontSize: 14,
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
@@ -278,10 +295,10 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                       ),
                       Text(
                         '\$${_estimatedTotal.toStringAsFixed(2)}',
-                        style: const TextStyle(
+                        style: GoogleFonts.spaceGrotesk(
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -292,10 +309,10 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                     height: 48,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent, // #F97316
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppColors.primary, // Solid Navy #1A1D29
+                        foregroundColor: AppColors.background, // Cream #F9EBEA
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                       onPressed: () async {
                         final approvals = _decisions.entries
@@ -308,16 +325,19 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
 
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Repair approvals submitted. Work is now in progress!'),
-                              backgroundColor: AppColors.success,
+                            SnackBar(
+                              content: Text(
+                                'Repair approvals submitted. Work is now in progress!',
+                                style: GoogleFonts.inter(color: AppColors.background),
+                              ),
+                              backgroundColor: AppColors.primary,
                             ),
                           );
                         }
                       },
-                      child: const Text(
+                      child: Text(
                         'Confirm Decisions & Authorize Work',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),

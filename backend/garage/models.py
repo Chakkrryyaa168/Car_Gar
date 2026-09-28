@@ -90,16 +90,41 @@ class User(AbstractUser):
     full_name = models.CharField(max_length=255, blank=True)
     phone_number = models.CharField(max_length=30, blank=True)
     fcm_token = models.CharField(max_length=255, blank=True, null=True)
+    customer_code = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True,
+        blank=True,
+        db_index=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         if not self.full_name and (self.first_name or self.last_name):
             self.full_name = f"{self.first_name} {self.last_name}".strip()
+        if not self.customer_code:
+            import random
+            for _ in range(1000):
+                code = f"CG-{random.randint(1000, 9999)}"
+                if not User.objects.filter(customer_code=code).exists():
+                    self.customer_code = code
+                    break
+            if not self.customer_code:
+                while True:
+                    code = f"CG-{random.randint(10000, 99999)}"
+                    if not User.objects.filter(customer_code=code).exists():
+                        self.customer_code = code
+                        break
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.full_name or self.username} ({self.role})"
+
+    @property
+    def profile_safe(self):
+        profile, _ = UserProfile.objects.get_or_create(user=self)
+        return profile
 
 
 class Vehicle(models.Model):
@@ -449,3 +474,77 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification to {self.recipient.username}: {self.type} - Read={self.is_read}"
+
+
+class UserProfile(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profile',
+        db_index=True
+    )
+    avatar_url = models.CharField(max_length=500, blank=True, default='')
+    address = models.TextField(blank=True, default='')
+    emergency_contact = models.CharField(max_length=50, blank=True, default='')
+
+    # Customer-specific metadata
+    secondary_phone = models.CharField(max_length=50, blank=True, default='')
+    preferred_contact_channel = models.CharField(
+        max_length=50,
+        blank=True,
+        default='App push'
+    )  # 'App push', 'SMS', 'WhatsApp', 'Email'
+    billing_address = models.TextField(blank=True, default='')
+    saved_payment_method = models.CharField(
+        max_length=50,
+        blank=True,
+        default='CREDIT_CARD'
+    )  # 'CASH', 'CREDIT_CARD', 'BANK_TRANSFER', 'ONLINE'
+    default_vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='default_for_profiles'
+    )
+    communication_preferences = models.CharField(
+        max_length=100,
+        blank=True,
+        default='ALL'
+    )
+
+    # Staff-specific metadata (Mechanic, Receptionist, Admin)
+    employee_id = models.CharField(max_length=50, blank=True, default='')
+    specialization = models.CharField(max_length=100, blank=True, default='')
+    bio = models.TextField(blank=True, default='')
+
+    # Admin / Staff employment records
+    date_joined_company = models.DateField(null=True, blank=True)
+    hourly_rate = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'user_profiles'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Profile of {self.user.username} ({self.user.role})"
+
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=User)
+def create_or_save_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.get_or_create(user=instance)
+

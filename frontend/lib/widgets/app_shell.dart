@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
@@ -7,6 +8,7 @@ import '../screens/receptionist/receptionist_screen.dart';
 import '../screens/mechanic/mechanic_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/auth/auth_screen.dart';
+import '../screens/profile/profile_screen.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({super.key});
@@ -38,11 +40,12 @@ class AppShell extends StatelessWidget {
     }
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // Authenticated User Top Navigation Bar
+          // Authenticated User Top Navigation Bar (Grounded Navy)
           _buildAuthenticatedHeader(context, auth),
-          // Active Role Portal Screen
+          // Active Role Portal Screen (Soft, Airy Mediterranean Cream)
           Expanded(child: currentPortal),
         ],
       ),
@@ -53,46 +56,34 @@ class AppShell extends StatelessWidget {
     final user = auth.currentUser;
     final role = auth.currentRole;
 
-    Color roleColor;
     IconData roleIcon;
     String roleLabel;
 
     switch (role) {
       case 'ADMIN':
-        roleColor = const Color(0xFF6366F1); // Indigo
         roleIcon = Icons.admin_panel_settings_outlined;
         roleLabel = 'ADMINISTRATOR';
         break;
       case 'RECEPTIONIST':
-        roleColor = const Color(0xFF3B82F6); // Blue
         roleIcon = Icons.desk_outlined;
         roleLabel = 'RECEPTION & CASHIER';
         break;
       case 'MECHANIC':
-        roleColor = const Color(0xFFF97316); // Safety Orange
         roleIcon = Icons.build_outlined;
         roleLabel = 'WORKSHOP MECHANIC';
         break;
       case 'CUSTOMER':
       default:
-        roleColor = const Color(0xFF14B8A6); // Teal
         roleIcon = Icons.person_outline;
         roleLabel = 'VEHICLE OWNER';
         break;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: const BoxDecoration(
-        color: Color(0xFF1E3A5F), // Deep Steel Blue
-        border: Border(bottom: BorderSide(color: Color(0xFF152A45), width: 1.5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
+        color: AppColors.topBarBackground, // #1A1D29 Grounded Navy
+        border: Border(bottom: BorderSide(color: AppColors.topBarBorder, width: 1.0)),
       ),
       child: SafeArea(
         bottom: false,
@@ -100,108 +91,141 @@ class AppShell extends StatelessWidget {
           children: [
             // Garage Brand Emblem
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: AppColors.topBarSurface,
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.topBarBorder),
               ),
-              child: const Icon(Icons.directions_car_filled, color: Colors.white, size: 20),
+              child: const Icon(Icons.directions_car_filled, color: AppColors.topBarText, size: 18),
             ),
-            const SizedBox(width: 10),
-            const Column(
+            const SizedBox(width: 8),
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'CAR GARAGE',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
+                  style: GoogleFonts.spaceGrotesk(
+                    color: AppColors.topBarText, // Cream #F9EBEA
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 1.1,
                   ),
                 ),
                 Text(
                   'Management Portal',
-                  style: TextStyle(color: Colors.white70, fontSize: 10),
+                  style: GoogleFonts.inter(
+                    color: AppColors.topBarMuted, // Silver #B1B2B5
+                    fontSize: 9,
+                  ),
                 ),
               ],
             ),
+            const SizedBox(width: 8),
             const Spacer(),
 
-            // User Info & Role Chip
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white24),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: roleColor,
-                    child: Icon(roleIcon, size: 14, color: Colors.white),
+            // User Info & Role Chip (Clickable to open profile)
+            Flexible(
+              child: Tooltip(
+                message: 'View & Edit Profile',
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.topBarSurface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.topBarBorder),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundColor: AppColors.topBarBorder,
+                          backgroundImage: (user?.profile?.avatarUrl != null && user!.profile!.avatarUrl!.isNotEmpty)
+                              ? NetworkImage(user.profile!.avatarUrl!)
+                              : null,
+                          child: (user?.profile?.avatarUrl == null || user!.profile!.avatarUrl!.isEmpty)
+                              ? Icon(roleIcon, size: 13, color: AppColors.topBarText)
+                              : null,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                user?.fullName ?? user?.username ?? 'Logged In User',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  color: AppColors.topBarText, // Cream
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                roleLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  color: AppColors.topBarMuted, // Silver
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 8),
+
+            // Sign Out Button
+            Tooltip(
+              message: 'Sign Out',
+              child: InkWell(
+                onTap: () {
+                  _confirmSignOut(context, auth);
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.topBarSurface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.topBarBorder),
+                  ),
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      const Icon(Icons.logout, size: 14, color: AppColors.topBarMuted),
+                      const SizedBox(width: 4),
                       Text(
-                        user?.fullName ?? user?.username ?? 'Logged In User',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        roleLabel,
-                        style: TextStyle(
-                          color: roleColor,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
+                        'Sign Out',
+                        style: GoogleFonts.inter(
+                          color: AppColors.topBarMuted,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-
-            const SizedBox(width: 12),
-
-            // Sign Out / Switch User Button
-            InkWell(
-              onTap: () {
-                _confirmSignOut(context, auth);
-              },
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white30),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.logout, size: 14, color: Colors.white),
-                    SizedBox(width: 6),
-                    Text(
-                      'Sign Out',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ),
@@ -215,31 +239,52 @@ class AppShell extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Row(
+        backgroundColor: AppColors.surface, // #FFFFFF
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: AppColors.border),
+        ),
+        title: Row(
           children: [
-            Icon(Icons.logout, color: AppColors.primary),
-            SizedBox(width: 8),
-            Text('Sign Out'),
+            const Icon(Icons.logout, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(
+              'Sign Out',
+              style: GoogleFonts.spaceGrotesk(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
-        content: const Text(
+        content: Text(
           'Are you sure you want to sign out of the Car Garage Management System?',
+          style: GoogleFonts.inter(
+            color: AppColors.textBody,
+            fontSize: 13,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(color: AppColors.textSecondary),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.accent,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.background,
             ),
             onPressed: () {
               Navigator.pop(dialogCtx);
               auth.logout();
             },
-            child: const Text('Sign Out'),
+            child: Text(
+              'Sign Out',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
+import '../models/user_profile_model.dart';
 import '../services/api_service.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -12,6 +13,7 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider({required this.apiService});
 
   UserModel? get currentUser => _currentUser;
+  UserProfileModel? get profile => _currentUser?.profile;
   String get currentRole => _currentRole;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -59,11 +61,31 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> loginWithFirebase(String idToken, {String role = 'CUSTOMER'}) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await apiService.firebaseLogin(idToken: idToken, role: role);
+      _currentUser = result['user'];
+      _currentRole = (_currentUser?.role ?? role).toUpperCase();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> register({
     required String email,
     required String password,
     required String fullName,
     required String phoneNumber,
+    String? avatarUrl,
     String? licensePlate,
     String? make,
     String? model,
@@ -80,6 +102,7 @@ class AuthProvider extends ChangeNotifier {
         password: password,
         fullName: fullName,
         phoneNumber: phoneNumber,
+        avatarUrl: avatarUrl,
         licensePlate: licensePlate,
         make: make,
         model: model,
@@ -88,6 +111,32 @@ class AuthProvider extends ChangeNotifier {
       );
       _currentUser = result['user'];
       _currentRole = (_currentUser?.role ?? 'CUSTOMER').toUpperCase();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchProfile() async {
+    try {
+      final updatedUser = await apiService.fetchCurrentUser();
+      _currentUser = updatedUser;
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  Future<bool> updateProfile(Map<String, dynamic> data) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedUser = await apiService.updateProfile(data);
+      _currentUser = updatedUser;
       return true;
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');

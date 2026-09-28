@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/photo_model.dart';
 import '../theme/app_colors.dart';
 import 'photo_view_dialog.dart';
@@ -38,8 +39,13 @@ class PhotoGalleryModal extends StatelessWidget {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
-        color: AppColors.background,
+        color: AppColors.surface, // #FFFFFF
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        border: Border(
+          top: BorderSide(color: AppColors.border),
+          left: BorderSide(color: AppColors.border),
+          right: BorderSide(color: AppColors.border),
+        ),
       ),
       child: Column(
         children: [
@@ -47,29 +53,29 @@ class PhotoGalleryModal extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surfaceElevated, // #FDF6F5
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               border: Border(bottom: BorderSide(color: AppColors.border)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.photo_library_outlined, color: AppColors.primary),
-                    SizedBox(width: 8),
+                    const Icon(Icons.photo_library_outlined, color: AppColors.primary),
+                    const SizedBox(width: 8),
                     Text(
                       'Vehicle Photo Documentation',
-                      style: TextStyle(
+                      style: GoogleFonts.spaceGrotesk(
                         fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
                     ),
                   ],
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close, color: AppColors.textSecondary),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -78,10 +84,10 @@ class PhotoGalleryModal extends StatelessWidget {
           // Content
           Expanded(
             child: photos.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'No photos attached to this ticket yet.',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: GoogleFonts.inter(color: AppColors.textSecondary),
                     ),
                   )
                 : ListView(
@@ -90,21 +96,21 @@ class PhotoGalleryModal extends StatelessWidget {
                       _buildStageSection(
                         title: '1. Check-In Inspection Walkaround',
                         icon: Icons.car_crash_outlined,
-                        color: AppColors.statusCheckedIn,
+                        color: AppColors.primary,
                         photos: checkinPhotos,
                       ),
                       const SizedBox(height: 16),
                       _buildStageSection(
                         title: '2. Diagnosed Fault Evidence',
                         icon: Icons.warning_amber_rounded,
-                        color: AppColors.statusPendingApproval,
+                        color: AppColors.primary,
                         photos: faultPhotos,
                       ),
                       const SizedBox(height: 16),
                       _buildStageSection(
                         title: '3. Post-Repair Completion Verification',
                         icon: Icons.task_alt_rounded,
-                        color: AppColors.statusWorkCompleted,
+                        color: AppColors.primary,
                         photos: completedPhotos,
                       ),
                     ],
@@ -123,9 +129,9 @@ class PhotoGalleryModal extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceElevated, // #FDF6F5
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.border), // #E8DAD8
       ),
       padding: const EdgeInsets.all(14),
       child: Column(
@@ -133,37 +139,38 @@ class PhotoGalleryModal extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: color, size: 20),
+              Icon(icon, color: AppColors.primary, size: 20),
               const SizedBox(width: 8),
               Text(
                 title,
-                style: TextStyle(
+                style: GoogleFonts.spaceGrotesk(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: color,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Text(
                   '${photos.length} photos',
-                  style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
           if (photos.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Text(
                 'No photos recorded in this stage.',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontStyle: FontStyle.italic),
+                style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary, fontStyle: FontStyle.italic),
               ),
             )
           else
@@ -197,8 +204,8 @@ class PhotoGalleryModal extends StatelessWidget {
                           photo.url,
                           fit: BoxFit.cover,
                           errorBuilder: (ctx, err, stack) => Container(
-                            color: Colors.grey.shade200,
-                            child: const Icon(Icons.broken_image, color: Colors.grey),
+                            color: AppColors.surfaceMuted,
+                            child: const Icon(Icons.broken_image, color: AppColors.textSecondary),
                           ),
                         ),
                         Positioned(
@@ -207,13 +214,13 @@ class PhotoGalleryModal extends StatelessWidget {
                           right: 0,
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            color: Colors.black.withValues(alpha: 0.65),
+                            color: AppColors.primary.withValues(alpha: 0.8),
                             child: Text(
                               photo.caption.isNotEmpty ? photo.caption : photo.stageTitle,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: GoogleFonts.inter(
+                                color: AppColors.background,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
                               ),

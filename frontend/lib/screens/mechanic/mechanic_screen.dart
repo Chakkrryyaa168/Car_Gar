@@ -5,7 +5,6 @@ import 'package:file_picker/file_picker.dart';
 import '../../providers/ticket_provider.dart';
 import '../../models/ticket_model.dart';
 import '../../models/ticket_item_model.dart';
-import '../../models/photo_model.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/status_badge.dart';
 import '../../widgets/photo_gallery_modal.dart';
@@ -22,7 +21,7 @@ class MechanicScreen extends StatefulWidget {
 
 class _MechanicScreenState extends State<MechanicScreen> {
   String? _selectedTicketId;
-  bool _isSidebarOpen = true;
+  final bool _isSidebarOpen = true;
 
   @override
   void initState() {
@@ -47,68 +46,69 @@ class _MechanicScreenState extends State<MechanicScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 800;
+        final isMobile = constraints.maxWidth < 900;
+        final hasSelectedTicket = _selectedTicketId != null;
 
         return Scaffold(
-          drawer: isMobile
-              ? Drawer(
-                  width: 320,
-                  child: _buildQueueSidebar(context, activeTickets, provider, isDrawer: true),
-                )
-              : null,
           appBar: AppBar(
-            leading: Builder(
-              builder: (ctx) => IconButton(
-                icon: isMobile
-                    ? Badge.count(
-                        count: activeTickets.length,
-                        isLabelVisible: activeTickets.isNotEmpty,
-                        backgroundColor: AppColors.primary,
-                        child: const Icon(Icons.menu),
-                      )
-                    : Icon(_isSidebarOpen ? Icons.menu_open : Icons.menu),
-                tooltip: isMobile
-                    ? 'Open Workshop Queue'
-                    : (_isSidebarOpen ? 'Collapse Queue' : 'Expand Queue'),
-                onPressed: () {
-                  if (isMobile) {
-                    Scaffold.of(ctx).openDrawer();
-                  } else {
-                    setState(() => _isSidebarOpen = !_isSidebarOpen);
-                  }
-                },
-              ),
-            ),
-            title: isMobile && provider.selectedTicket != null
+            elevation: 0,
+            leading: hasSelectedTicket
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                    tooltip: 'Back to Workshop Queue',
+                    onPressed: () {
+                      setState(() => _selectedTicketId = null);
+                    },
+                  )
+                : null,
+            title: hasSelectedTicket && provider.selectedTicket != null
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('Mechanic Workshop Bay', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                       Text(
-                        provider.selectedTicket!.vehicleInfo ?? 'Ticket #${provider.selectedTicket!.ticketNumber}',
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.normal),
+                        provider.selectedTicket!.vehicleInfo ?? 'Vehicle Ticket',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                         overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        'Ticket #${provider.selectedTicket!.ticketNumber}',
+                        style: const TextStyle(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.normal),
                       ),
                     ],
                   )
-                : const Text('Mechanic Workshop Bay'),
-            actions: [
-              if (isMobile && activeTickets.isNotEmpty)
-                Builder(
-                  builder: (ctx) => TextButton.icon(
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                    icon: const Icon(Icons.format_list_bulleted, size: 16),
-                    label: Text(
-                      'Queue (${activeTickets.length})',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () => Scaffold.of(ctx).openDrawer(),
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF97316).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFF97316).withValues(alpha: 0.5)),
+                        ),
+                        child: const Icon(Icons.build_circle_rounded, size: 16, color: Color(0xFFF97316)),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Workshop Queue',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${activeTickets.length} Jobs',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+            actions: [
               IconButton(
                 icon: const Icon(Icons.refresh),
                 tooltip: 'Refresh Tickets',
@@ -116,73 +116,332 @@ class _MechanicScreenState extends State<MechanicScreen> {
               ),
             ],
           ),
-          body: Row(
-            children: [
-              // Left Sidebar: Active Queue (Desktop / Wide Screen only)
-              if (!isMobile && _isSidebarOpen)
-                SizedBox(
-                  width: 320,
-                  child: _buildQueueSidebar(context, activeTickets, provider, isDrawer: false),
-                ),
-
-              // Main Workspace: Ticket Detail & Operations
-              Expanded(
-                child: _selectedTicketId == null
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.handyman_outlined, size: 56, color: AppColors.textSecondary),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'No Vehicle Selected',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Select a vehicle ticket from the queue to start diagnosing or executing repairs.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-                              ),
-                              if (isMobile) ...[
-                                const SizedBox(height: 20),
-                                Builder(
-                                  builder: (ctx) => ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                    ),
-                                    icon: const Icon(Icons.format_list_bulleted),
-                                    label: Text('Open Workshop Queue (${activeTickets.length})'),
-                                    onPressed: () => Scaffold.of(ctx).openDrawer(),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      )
-                    : Consumer<TicketProvider>(
+          body: hasSelectedTicket
+              ? Row(
+                  children: [
+                    if (!isMobile && _isSidebarOpen)
+                      SizedBox(
+                        width: 320,
+                        child: _buildQueueSidebar(context, activeTickets, provider, isDrawer: false),
+                      ),
+                    Expanded(
+                      child: Consumer<TicketProvider>(
                         builder: (context, tp, child) {
                           final selected = tp.selectedTicket;
                           if (tp.isLoading && selected == null) {
                             return const Center(child: CircularProgressIndicator());
                           }
                           if (selected == null) {
-                            return const Center(child: Text('Unable to load ticket'));
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text('Unable to load ticket details.'),
+                                  const SizedBox(height: 12),
+                                  ElevatedButton(
+                                    onPressed: () => setState(() => _selectedTicketId = null),
+                                    child: const Text('Back to Workshop Queue'),
+                                  ),
+                                ],
+                              ),
+                            );
                           }
-
                           return _buildMechanicWorkspace(context, selected, tp, isMobile: isMobile);
                         },
                       ),
+                    ),
+                  ],
+                )
+              : _buildFullWorkshopQueue(context, activeTickets, provider),
+        );
+      },
+    );
+  }
+
+  Widget _buildFullWorkshopQueue(
+    BuildContext context,
+    List<TicketModel> activeTickets,
+    TicketProvider provider,
+  ) {
+    if (provider.isLoading && activeTickets.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (activeTickets.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle_outline, size: 56, color: AppColors.success),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Workshop Queue is Empty',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'All vehicles checked in have been serviced or picked up.\nPull down or tap refresh to check for new intake orders.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Refresh Queue'),
+                onPressed: () => provider.fetchTickets(),
               ),
             ],
           ),
-        );
-      },
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => provider.fetchTickets(),
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Banner Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1E3A5F), Color(0xFF2C5282)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1E3A5F).withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.build_circle, color: Colors.white, size: 28),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Workshop Repair Queue',
+                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${activeTickets.length} active service order${activeTickets.length == 1 ? '' : 's'} assigned to bay. Tap any vehicle to view details & execute work.',
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          const Text(
+            'ACTIVE VEHICLE TICKETS',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textSecondary,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // List of Ticket Cards
+          ...activeTickets.map((ticket) {
+            final approvedCount = ticket.approvedItemsCount;
+            final completedCount = ticket.completedItemsCount;
+            final progress = approvedCount > 0 ? (completedCount / approvedCount).clamp(0.0, 1.0) : 0.0;
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: ticket.isPendingApproval
+                      ? AppColors.warning.withValues(alpha: 0.5)
+                      : (ticket.isInProgress ? AppColors.accent.withValues(alpha: 0.3) : AppColors.border),
+                  width: 1.2,
+                ),
+              ),
+              child: InkWell(
+                onTap: () {
+                  setState(() => _selectedTicketId = ticket.id);
+                  provider.fetchTicketDetail(ticket.id);
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Row
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.directions_car_filled, color: AppColors.primary, size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  ticket.vehicleInfo ?? 'Vehicle #${ticket.ticketNumber}',
+                                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Ticket #${ticket.ticketNumber} • Customer: ${ticket.customerName ?? 'Walk-in'}',
+                                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          StatusBadge(status: ticket.currentStatus, fontSize: 11),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Mileage & Fuel metrics
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.speed, size: 14, color: AppColors.textSecondary),
+                                const SizedBox(width: 4),
+                                Text('${ticket.mileageIn} mi', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                const Icon(Icons.local_gas_station, size: 14, color: AppColors.textSecondary),
+                                const SizedBox(width: 4),
+                                Text('Fuel: ${ticket.fuelLevelPercent}%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                const Icon(Icons.checklist, size: 14, color: AppColors.textSecondary),
+                                const SizedBox(width: 4),
+                                Text('$completedCount/$approvedCount items done', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      if (approvedCount > 0) ...[
+                        const SizedBox(height: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 6,
+                            backgroundColor: Colors.grey.shade200,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              progress >= 1.0 ? AppColors.success : AppColors.accent,
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      // Customer notes snippet
+                      if (ticket.notes.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          'Customer Concern: "${ticket.notes}"',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 12),
+                      const Divider(height: 1),
+                      const SizedBox(height: 10),
+
+                      // Action prompt
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            ticket.createdAt != null
+                                ? 'Opened: ${ticket.createdAt!.month}/${ticket.createdAt!.day} ${ticket.createdAt!.hour}:${ticket.createdAt!.minute.toString().padLeft(2, '0')}'
+                                : 'Recent Ticket',
+                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          ),
+                          const Row(
+                            children: [
+                              Text(
+                                'View Ticket Detail',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.primary),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 
@@ -304,19 +563,17 @@ class _MechanicScreenState extends State<MechanicScreen> {
           if (isMobile)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Builder(
-                builder: (ctx) => OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40),
-                    side: const BorderSide(color: AppColors.primary),
-                  ),
-                  icon: const Icon(Icons.format_list_bulleted, size: 18, color: AppColors.primary),
-                  label: const Text(
-                    'View Workshop Queue / Switch Ticket',
-                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: () => Scaffold.of(ctx).openDrawer(),
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(40),
+                  side: const BorderSide(color: AppColors.primary),
                 ),
+                icon: const Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
+                label: const Text(
+                  'Back to Workshop Queue',
+                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () => setState(() => _selectedTicketId = null),
               ),
             ),
           // Vehicle Header & Status Action
@@ -390,7 +647,7 @@ class _MechanicScreenState extends State<MechanicScreen> {
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(backgroundColor: AppColors.textSecondary),
                         icon: const Icon(Icons.add_a_photo, size: 16),
-                        label: const Text('Add Evidence Photo'),
+                        label: const Text('Upload Image'),
                         onPressed: () => _promptUploadPhoto(context, ticket, provider),
                       ),
 
@@ -640,7 +897,7 @@ class _MechanicScreenState extends State<MechanicScreen> {
                         visualDensity: VisualDensity.compact,
                       ),
                       icon: const Icon(Icons.add_a_photo, size: 14),
-                      label: const Text('Add Photo'),
+                      label: const Text('Upload Image'),
                       onPressed: () => _promptUploadPhoto(context, ticket, provider),
                     ),
                   ],
@@ -663,7 +920,7 @@ class _MechanicScreenState extends State<MechanicScreen> {
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
                         icon: const Icon(Icons.file_upload_outlined, size: 16),
-                        label: const Text('Choose Photo from Device'),
+                        label: const Text('Upload Image'),
                         onPressed: () => _promptUploadPhoto(context, ticket, provider),
                       ),
                     ],
@@ -1193,7 +1450,7 @@ class _MechanicScreenState extends State<MechanicScreen> {
               children: [
                 Icon(Icons.add_a_photo_outlined, color: AppColors.primary),
                 SizedBox(width: 8),
-                Text('Add Evidence Photo'),
+                Text('Upload Image'),
               ],
             ),
             content: SizedBox(
@@ -1216,26 +1473,24 @@ class _MechanicScreenState extends State<MechanicScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    const Text('Photo from Device', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const Text('Upload Image from Device', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     const SizedBox(height: 8),
                     InkWell(
                       onTap: isUploading
                           ? null
                           : () async {
                               try {
-                                final result = await FilePicker.platform.pickFiles(
+                                final files = await FilePicker.pickFiles(
                                   type: FileType.image,
-                                  withData: true,
                                 );
-                                if (result != null && result.files.isNotEmpty) {
-                                  final file = result.files.first;
-                                  if (file.bytes != null) {
-                                    setDialogState(() {
-                                      pickedFileBytes = file.bytes;
-                                      pickedFileName = file.name;
-                                      pickedFileSize = file.size;
-                                    });
-                                  }
+                                if (files.isNotEmpty) {
+                                  final file = files.first;
+                                  final bytes = await file.readAsBytes();
+                                  setDialogState(() {
+                                    pickedFileBytes = bytes;
+                                    pickedFileName = file.name;
+                                    pickedFileSize = file.lengthSync() ?? bytes.length;
+                                  });
                                 }
                               } catch (e) {
                                 if (context.mounted) {
@@ -1303,12 +1558,12 @@ class _MechanicScreenState extends State<MechanicScreen> {
                                   Icon(Icons.drive_folder_upload, size: 40, color: AppColors.primary),
                                   SizedBox(height: 8),
                                   Text(
-                                    'Choose Photo from your Device',
+                                    'Upload Image',
                                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primary),
                                   ),
                                   SizedBox(height: 4),
                                   Text(
-                                    'Click here to select an image (JPG, PNG, WEBP)',
+                                    'Click here to select an image from your device',
                                     style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                                   ),
                                 ],
@@ -1360,7 +1615,7 @@ class _MechanicScreenState extends State<MechanicScreen> {
                 icon: isUploading
                     ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.upload, size: 16),
-                label: Text(isUploading ? 'Uploading...' : 'Upload Photo'),
+                label: Text(isUploading ? 'Uploading...' : 'Upload Image'),
                 onPressed: !canUpload
                     ? null
                     : () async {
@@ -1449,11 +1704,12 @@ class _MechanicScreenState extends State<MechanicScreen> {
                   const SizedBox(height: 6),
                   InkWell(
                     onTap: () async {
-                      final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: true);
-                      if (result != null && result.files.isNotEmpty && result.files.first.bytes != null) {
+                      final files = await FilePicker.pickFiles(type: FileType.image);
+                      if (files.isNotEmpty) {
+                        final bytes = await files.first.readAsBytes();
                         setDialogState(() {
-                          pickedFileBytes = result.files.first.bytes;
-                          pickedFileName = result.files.first.name;
+                          pickedFileBytes = bytes;
+                          pickedFileName = files.first.name;
                         });
                       }
                     },
@@ -1471,7 +1727,7 @@ class _MechanicScreenState extends State<MechanicScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              pickedFileName ?? 'Choose QA photo from device',
+                              pickedFileName ?? 'Upload QA Image from device',
                               style: TextStyle(fontSize: 12, color: pickedFileBytes != null ? Colors.black87 : AppColors.textSecondary),
                               overflow: TextOverflow.ellipsis,
                             ),

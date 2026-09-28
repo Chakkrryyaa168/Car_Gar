@@ -1,5 +1,7 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../models/inventory_model.dart';
 import '../../providers/ticket_provider.dart';
 import '../../theme/app_colors.dart';
@@ -27,6 +29,9 @@ class _AddDiagnosisItemModalState extends State<AddDiagnosisItemModal> {
   final _priceController = TextEditingController();
   final _qtyController = TextEditingController(text: '1.0');
   final _notesController = TextEditingController();
+
+  Uint8List? _evidenceImageBytes;
+  String? _evidenceImageName;
 
   List<InventoryModel> _inventoryItems = [];
   String? _selectedInventoryId;
@@ -198,6 +203,84 @@ class _AddDiagnosisItemModalState extends State<AddDiagnosisItemModal> {
                       hintText: 'e.g. Measured 2mm thickness remaining; rotor warped.',
                     ),
                   ),
+                  const SizedBox(height: 14),
+
+                  // Fault Evidence Photo
+                  const Text('Fault Evidence Photo (Optional)', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () async {
+                      final files = await FilePicker.pickFiles(type: FileType.image);
+                      if (files.isNotEmpty) {
+                        final file = files.first;
+                        final bytes = await file.readAsBytes();
+                        setState(() {
+                          _evidenceImageBytes = bytes;
+                          _evidenceImageName = file.name;
+                        });
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _evidenceImageBytes != null ? AppColors.primary.withValues(alpha: 0.05) : AppColors.background,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _evidenceImageBytes != null ? AppColors.primary : AppColors.border,
+                          width: 1.2,
+                        ),
+                      ),
+                      child: _evidenceImageBytes != null
+                          ? Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.memory(
+                                    _evidenceImageBytes!,
+                                    width: 50,
+                                    height: 50,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _evidenceImageName ?? 'Photo selected',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      const Text('Tap to change image', style: TextStyle(fontSize: 11, color: AppColors.primary)),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close, size: 18),
+                                  onPressed: () => setState(() {
+                                    _evidenceImageBytes = null;
+                                    _evidenceImageName = null;
+                                  }),
+                                ),
+                              ],
+                            )
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_a_photo_outlined, color: AppColors.primary, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Upload Image',
+                                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
                   const SizedBox(height: 20),
 
                   // Submit
@@ -242,6 +325,16 @@ class _AddDiagnosisItemModalState extends State<AddDiagnosisItemModal> {
         inventoryItemId: _selectedInventoryId,
         mechanicNotes: _notesController.text,
       );
+
+      if (_evidenceImageBytes != null) {
+        await provider.uploadPhotoFile(
+          ticketId: widget.ticketId,
+          stage: 'FAULT_EVIDENCE',
+          fileBytes: _evidenceImageBytes!,
+          fileName: _evidenceImageName ?? 'fault_evidence.jpg',
+          caption: 'Evidence for ${_descController.text}',
+        );
+      }
 
       if (mounted) {
         Navigator.pop(context);

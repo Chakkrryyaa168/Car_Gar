@@ -9,6 +9,16 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env if present
+env_file = BASE_DIR / '.env'
+if env_file.exists():
+    with open(env_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                k, v = line.split('=', 1)
+                os.environ.setdefault(k.strip(), v.strip())
+
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-car-garage-management-key-999-secure')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
@@ -161,11 +171,20 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # Cloudinary Settings
+import cloudinary
+
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'demo'),
-    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', ''),
-    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', ''),
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'ri9kex6x'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '211977781482121'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'DYQlEZ8naUyTg9bpacr79RVjFV8'),
 }
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+    secure=True,
+)
 
 # Firebase Admin Configuration
 FIREBASE_CREDENTIALS_PATH = os.environ.get(

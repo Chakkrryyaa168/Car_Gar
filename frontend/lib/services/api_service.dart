@@ -94,11 +94,39 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> firebaseLogin({
+    required String idToken,
+    String role = 'CUSTOMER',
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/firebase-login/'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'id_token': idToken,
+        'role': role,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      authToken = data['access'];
+      return {
+        'token': data['access'],
+        'refresh': data['refresh'],
+        'user': UserModel.fromJson(data['user']),
+        'firebase_uid': data['firebase_uid'],
+      };
+    } else {
+      throw Exception(_extractError(response, 'Firebase authentication failed'));
+    }
+  }
+
   Future<Map<String, dynamic>> register({
     required String email,
     required String password,
     required String fullName,
     required String phoneNumber,
+    String? avatarUrl,
     String? licensePlate,
     String? make,
     String? model,
@@ -113,6 +141,7 @@ class ApiService {
         'password': password,
         'full_name': fullName,
         'phone_number': phoneNumber,
+        'avatar_url': avatarUrl,
         'license_plate': licensePlate,
         'make': make,
         'model': model,
@@ -133,16 +162,51 @@ class ApiService {
     }
   }
 
+  Future<UserModel> fetchCurrentUser() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/auth/profile/'),
+      headers: _headers,
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return UserModel.fromJson(data);
+    } else {
+      throw Exception(_extractError(response, 'Failed to fetch user profile'));
+    }
+  }
+
+  Future<UserModel> updateProfile(Map<String, dynamic> data) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/auth/profile/'),
+      headers: _headers,
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 200) {
+      final updatedData = jsonDecode(response.body);
+      return UserModel.fromJson(updatedData);
+    } else {
+      throw Exception(_extractError(response, 'Failed to update profile'));
+    }
+  }
+
   // -------------------------------------------------------------
   // Tickets
   // -------------------------------------------------------------
-  Future<List<TicketModel>> fetchTickets({String? status}) async {
-    String url = '$baseUrl/tickets/';
-    if (status != null && status.isNotEmpty) {
-      url += '?status=$status';
+  Future<List<TicketModel>> fetchTickets({String? status, String? search}) async {
+    final queryParams = <String, String>{};
+    if (status != null && status.isNotEmpty && status != 'ALL') {
+      queryParams['status'] = status;
+    }
+    if (search != null && search.trim().isNotEmpty) {
+      queryParams['search'] = search.trim();
     }
 
-    final response = await http.get(Uri.parse(url), headers: _headers);
+    final baseUri = Uri.parse('$baseUrl/tickets/');
+    final uri = queryParams.isNotEmpty
+        ? baseUri.replace(queryParameters: queryParams)
+        : baseUri;
+
+    final response = await http.get(uri, headers: _headers);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       final List results = decoded is Map && decoded.containsKey('results')
@@ -339,6 +403,36 @@ class ApiService {
     }
   }
 
+  Future<String> uploadImageFile({
+    required List<int> fileBytes,
+    required String fileName,
+    String folder = 'car_gar/uploads',
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/upload/'),
+    );
+    if (authToken != null && authToken!.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $authToken';
+    }
+    request.fields['folder'] = folder;
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'file',
+        fileBytes,
+        filename: fileName,
+      ),
+    );
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_extractError(response, 'Failed to upload image'));
+    }
+    final data = jsonDecode(response.body);
+    return data['url'] as String;
+  }
+
   Future<void> deletePhoto(String photoId) async {
     final response = await http.delete(
       Uri.parse('$baseUrl/photos/$photoId/'),
@@ -352,8 +446,12 @@ class ApiService {
   // -------------------------------------------------------------
   // Vehicles
   // -------------------------------------------------------------
-  Future<List<VehicleModel>> fetchVehicles() async {
-    final response = await http.get(Uri.parse('$baseUrl/vehicles/'), headers: _headers);
+  Future<List<VehicleModel>> fetchVehicles({String? search}) async {
+    String url = '$baseUrl/vehicles/';
+    if (search != null && search.trim().isNotEmpty) {
+      url += '?search=${Uri.encodeComponent(search.trim())}';
+    }
+    final response = await http.get(Uri.parse(url), headers: _headers);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       final List results = decoded is Map && decoded.containsKey('results')
@@ -363,6 +461,24 @@ class ApiService {
     } else {
       throw Exception('Failed to fetch vehicles: ${response.statusCode}');
     }
+  }
+
+  // -------------------------------------------------------------
+  // Customer Quick Lookup (by Customer ID, Phone, or Plate)
+  // -------------------------------------------------------------
+  Future<List<Map<String, dynamic>>> lookupCustomer(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return [];
+    final response = await http.get(
+      Uri.parse('$baseUrl/customers/lookup/?q=${Uri.encodeComponent(trimmed)}'),
+      headers: _headers,
+    );
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      final List results = decoded['results'] ?? [];
+      return results.map((e) => Map<String, dynamic>.from(e)).toList();
+    }
+    return [];
   }
 
   Future<VehicleModel> createVehicle({

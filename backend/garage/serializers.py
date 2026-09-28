@@ -3,27 +3,54 @@ from django.contrib.auth import get_user_model
 from garage.models import (
     Vehicle, ServiceTicket, InventoryItem, TicketItem,
     TicketPhoto, StockMovement, Invoice, Payment,
-    TicketStatusLog, Notification, TicketStatus, ApprovalStatus
+    TicketStatusLog, Notification, TicketStatus, ApprovalStatus,
+    UserProfile
 )
 
 User = get_user_model()
 
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    default_vehicle_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            'id', 'avatar_url', 'address', 'emergency_contact',
+            'secondary_phone', 'preferred_contact_channel',
+            'billing_address', 'saved_payment_method',
+            'default_vehicle', 'default_vehicle_display',
+            'communication_preferences',
+            'employee_id', 'specialization', 'bio',
+            'date_joined_company', 'hourly_rate',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_default_vehicle_display(self, obj):
+        if obj.default_vehicle:
+            return str(obj.default_vehicle)
+        return None
+
+
 class UserSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer(source='profile_safe', read_only=True)
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'full_name', 'phone_number', 'role', 'fcm_token']
-        read_only_fields = ['id']
+        fields = ['id', 'username', 'email', 'full_name', 'phone_number', 'role', 'customer_code', 'fcm_token', 'profile']
+        read_only_fields = ['id', 'customer_code']
 
 
 class VehicleSerializer(serializers.ModelSerializer):
     owner_name = serializers.ReadOnlyField(source='owner.full_name')
     owner_phone = serializers.ReadOnlyField(source='owner.phone_number')
+    owner_customer_code = serializers.ReadOnlyField(source='owner.customer_code')
 
     class Meta:
         model = Vehicle
         fields = [
-            'id', 'owner', 'owner_name', 'owner_phone',
+            'id', 'owner', 'owner_name', 'owner_phone', 'owner_customer_code',
             'license_plate', 'vin', 'make', 'model', 'year', 'color',
             'is_verified', 'created_at', 'updated_at'
         ]
@@ -140,7 +167,10 @@ class ServiceTicketListSerializer(serializers.ModelSerializer):
     vehicle_info = serializers.SerializerMethodField()
     customer_name = serializers.ReadOnlyField(source='customer.full_name')
     customer_phone = serializers.ReadOnlyField(source='customer.phone_number')
+    customer_code = serializers.ReadOnlyField(source='customer.customer_code')
     lead_mechanic_name = serializers.ReadOnlyField(source='lead_mechanic.full_name')
+    lead_mechanic_specialization = serializers.SerializerMethodField()
+    lead_mechanic_avatar = serializers.SerializerMethodField()
     receptionist_name = serializers.ReadOnlyField(source='receptionist.full_name')
     total_items_count = serializers.SerializerMethodField()
     approved_items_count = serializers.SerializerMethodField()
@@ -151,7 +181,8 @@ class ServiceTicketListSerializer(serializers.ModelSerializer):
         model = ServiceTicket
         fields = [
             'id', 'ticket_number', 'vehicle', 'vehicle_info', 'customer',
-            'customer_name', 'customer_phone', 'lead_mechanic', 'lead_mechanic_name',
+            'customer_name', 'customer_phone', 'customer_code', 'lead_mechanic', 'lead_mechanic_name',
+            'lead_mechanic_specialization', 'lead_mechanic_avatar',
             'receptionist', 'receptionist_name', 'current_status', 'mileage_in',
             'fuel_level_percent', 'notes', 'total_items_count', 'approved_items_count',
             'completed_items_count', 'total_estimated_amount', 'created_at', 'updated_at'
@@ -174,6 +205,16 @@ class ServiceTicketListSerializer(serializers.ModelSerializer):
     def get_total_estimated_amount(self, obj):
         approved = obj.items.filter(approval_status=ApprovalStatus.APPROVED)
         return float(sum((item.total_price for item in approved), 0))
+
+    def get_lead_mechanic_specialization(self, obj):
+        if obj.lead_mechanic and hasattr(obj.lead_mechanic, 'profile_safe'):
+            return obj.lead_mechanic.profile_safe.specialization
+        return None
+
+    def get_lead_mechanic_avatar(self, obj):
+        if obj.lead_mechanic and hasattr(obj.lead_mechanic, 'profile_safe'):
+            return obj.lead_mechanic.profile_safe.avatar_url
+        return None
 
 
 class ServiceTicketDetailSerializer(serializers.ModelSerializer):

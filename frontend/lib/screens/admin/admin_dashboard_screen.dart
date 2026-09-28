@@ -16,8 +16,9 @@ class AdminDashboardScreen extends StatefulWidget {
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
-class _AdminDashboardScreenState extends State<AdminDashboardScreen> with SingleTickerProviderStateMixin {
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> with TickerProviderStateMixin {
   late TabController _tabController;
+  late AnimationController _refreshAnimController;
   Map<String, dynamic> _stats = {};
   List<UserModel> _staffList = [];
   List<Map<String, dynamic>> _auditLogs = [];
@@ -28,6 +29,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _refreshAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadAllData();
     });
@@ -36,10 +41,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   @override
   void dispose() {
     _tabController.dispose();
+    _refreshAnimController.dispose();
     super.dispose();
   }
 
   Future<void> _loadAllData() async {
+    _refreshAnimController.forward(from: 0.0);
     final ticketProvider = Provider.of<TicketProvider>(context, listen: false);
     final invProvider = Provider.of<InventoryProvider>(context, listen: false);
 
@@ -87,28 +94,200 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Operations & Financial Console'),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          labelColor: AppColors.accent,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: AppColors.accent,
-          indicatorWeight: 3,
-          tabs: const [
-            Tab(icon: Icon(Icons.analytics_outlined), text: 'Business Analytics'),
-            Tab(icon: Icon(Icons.people_alt_outlined), text: 'Staff & Roles'),
-            Tab(icon: Icon(Icons.inventory_2_outlined), text: 'Warehouse Parts'),
-            Tab(icon: Icon(Icons.history_outlined), text: 'Audit & Accountability'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF0F172A), // Deep Slate
+                Color(0xFF1E3A5F), // Deep Steel Blue
+                Color(0xFF1E293B), // Dark Slate
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border(
+              bottom: BorderSide(color: Color(0xFF334155), width: 1),
+            ),
+          ),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.admin_panel_settings_rounded, size: 18, color: Colors.white),
+            ),
+            const SizedBox(width: 12),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'ADMIN OPERATIONS',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      'Financial & Workshop Intelligence Console',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh Console',
-            onPressed: _loadAllData,
+          Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: Tooltip(
+              message: 'Refresh Console Data',
+              child: InkWell(
+                onTap: _loadAllData,
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                  child: RotationTransition(
+                    turns: Tween(begin: 0.0, end: 1.0).animate(
+                      CurvedAnimation(parent: _refreshAnimController, curve: Curves.easeInOutCubic),
+                    ),
+                    child: const Icon(Icons.refresh_rounded, size: 18, color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(62),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              dividerColor: Colors.transparent,
+              indicatorSize: TabBarIndicatorSize.tab,
+              indicator: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFFF97316), // Safety Orange
+                    Color(0xFFEA580C), // Deep Glow Amber
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFF97316).withValues(alpha: 0.45),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white60,
+              labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.4),
+              unselectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              tabs: const [
+                Tab(
+                  height: 40,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.analytics_rounded, size: 16),
+                        SizedBox(width: 8),
+                        Text('Business Analytics'),
+                      ],
+                    ),
+                  ),
+                ),
+                Tab(
+                  height: 40,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.people_alt_rounded, size: 16),
+                        SizedBox(width: 8),
+                        Text('Staff & Roles'),
+                      ],
+                    ),
+                  ),
+                ),
+                Tab(
+                  height: 40,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.inventory_2_rounded, size: 16),
+                        SizedBox(width: 8),
+                        Text('Warehouse Parts'),
+                      ],
+                    ),
+                  ),
+                ),
+                Tab(
+                  height: 40,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.verified_user_rounded, size: 16),
+                        SizedBox(width: 8),
+                        Text('Audit & Accountability'),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: TabBarView(
         controller: _tabController,

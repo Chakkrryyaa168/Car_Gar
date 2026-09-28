@@ -13,10 +13,10 @@ from garage.models import (
     TicketPhoto, StockMovement, Invoice, Payment,
     TicketStatusLog, Notification, UserRole, TicketStatus,
     ApprovalStatus, PhotoStage, ItemType, InvoiceStatus,
-    NotificationType, StockMovementType
+    NotificationType, StockMovementType, UserProfile
 )
 from garage.serializers import (
-    UserSerializer, VehicleSerializer, InventoryItemSerializer,
+    UserSerializer, UserProfileSerializer, VehicleSerializer, InventoryItemSerializer,
     TicketPhotoSerializer, TicketItemSerializer, StockMovementSerializer,
     PaymentSerializer, InvoiceSerializer, TicketStatusLogSerializer,
     NotificationSerializer, ServiceTicketListSerializer, ServiceTicketDetailSerializer
@@ -115,6 +115,59 @@ def login_view(request):
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
+def firebase_login_view(request):
+    """
+    Firebase Authentication login endpoint.
+    Accepts Firebase ID token, verifies it against Firebase Admin,
+    syncs/provisions local Django user, and returns DRF JWT tokens.
+    """
+    id_token = request.data.get('id_token')
+    role = request.data.get('role', UserRole.CUSTOMER)
+
+    if not id_token:
+        return Response({'error': 'id_token is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        from garage.services.firebase_service import verify_firebase_token, get_or_create_firebase_user
+        decoded_token = verify_firebase_token(id_token)
+        user = get_or_create_firebase_user(decoded_token, desired_role=role)
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserSerializer(user).data,
+            'firebase_uid': decoded_token.get('uid'),
+        })
+    except Exception as e:
+        return Response({'error': f"Firebase authentication failed: {str(e)}"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([permissions.AllowAny])
+def firebase_custom_token_view(request):
+    """
+    Development/testing endpoint: generates a Firebase custom auth token for project car-gar-6072d.
+    """
+    from garage.services.firebase_service import create_custom_firebase_token
+    uid = request.query_params.get('uid') or request.data.get('uid') or f"user_{uuid.uuid4().hex[:8]}"
+    email = request.query_params.get('email') or request.data.get('email')
+    claims = {'email': email} if email else None
+    try:
+        custom_token = create_custom_firebase_token(uid, claims=claims)
+        return Response({
+            'status': 'success',
+            'project_id': 'car-gar-6072d',
+            'uid': uid,
+            'custom_token': custom_token,
+            'message': 'Firebase custom auth token generated successfully'
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
 def register_view(request):
     """
     Customer registration endpoint with optional vehicle registration.
@@ -172,6 +225,32 @@ def register_view(request):
                 is_verified=True,
             )
 
+        # Optional profile avatar
+        avatar_url = (request.data.get('avatar_url') or '').strip()
+        avatar_file = request.FILES.get('avatar') or request.FILES.get('image') or request.FILES.get('file')
+        if avatar_file:
+            from garage.cloudinary_service import upload_image
+            avatar_url = upload_image(avatar_file, folder='car_gar/avatars')
+
+        if avatar_url:
+            profile = user.profile_safe
+            profile.avatar_url = avatar_url
+            profile.save()
+
+    # Automatically sync user to Firebase Authentication so they show up on the Firebase Console!
+    try:
+        from garage.services.firebase_service import sync_user_to_firebase
+        sync_user_to_firebase(
+            email=user.email,
+            password=password,
+            display_name=user.full_name or user.username,
+            role=user.role,
+            photo_url=avatar_url or None,
+        )
+    except Exception as fb_err:
+        import logging
+        logging.getLogger(__name__).warning(f"Could not sync new user to Firebase Auth: {fb_err}")
+
     refresh = RefreshToken.for_user(user)
     return Response({
         'access': str(refresh.access_token),
@@ -184,6 +263,90 @@ def register_view(request):
 @permission_classes([permissions.IsAuthenticated])
 def current_user_view(request):
     return Response(UserSerializer(request.user).data)
+
+
+@api_view(['GET', 'PUT', 'PATCH'])
+@permission_classes([permissions.IsAuthenticated])
+def user_profile_view(request):
+    """
+    Get or update the current authenticated user's profile and contact details.
+    """
+    user = request.user
+    profile = user.profile_safe
+
+    if request.method in ['PUT', 'PATCH']:
+        data = request.data.copy()
+
+        # Update user-level attributes if provided
+        user_updated = False
+        if 'full_name' in data and data['full_name'] is not None:
+            user.full_name = str(data.pop('full_name')).strip()
+            user_updated = True
+        else:
+            data.pop('full_name', None)
+
+        if 'phone_number' in data and data['phone_number'] is not None:
+            user.phone_number = str(data.pop('phone_number')).strip()
+            user_updated = True
+        else:
+            data.pop('phone_number', None)
+
+        if 'email' in data and data['email'] is not None:
+            user.email = str(data.pop('email')).strip()
+            user_updated = True
+        else:
+            data.pop('email', None)
+
+        if user_updated:
+            user.save()
+
+        # Handle avatar file upload to Cloudinary if uploaded directly
+        avatar_file = request.FILES.get('avatar') or request.FILES.get('file') or request.FILES.get('image')
+        if avatar_file:
+            from garage.cloudinary_service import upload_image
+            avatar_url = upload_image(avatar_file, folder='car_gar/avatars')
+            if not avatar_url.startswith('http'):
+                avatar_url = request.build_absolute_uri(avatar_url)
+            data['avatar_url'] = avatar_url
+
+        # Handle foreign key to default_vehicle if provided as ID string
+        if 'default_vehicle' in data and data['default_vehicle'] == '':
+            data['default_vehicle'] = None
+
+        serializer = UserProfileSerializer(profile, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(UserSerializer(user).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(UserSerializer(user).data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def upload_image_view(request):
+    """
+    Direct upload endpoint for images (avatars, inspection photos, vehicle walkarounds).
+    Uploads directly to Cloudinary and returns the secure URL.
+    """
+    file_obj = request.FILES.get('file') or request.FILES.get('image') or request.FILES.get('avatar')
+    folder = request.data.get('folder', 'car_gar/uploads')
+
+    if not file_obj:
+        base64_data = request.data.get('image_base64')
+        if base64_data:
+            from garage.cloudinary_service import upload_base64_image
+            url = upload_base64_image(base64_data, folder=folder)
+            if not url.startswith('http'):
+                url = request.build_absolute_uri(url)
+            return Response({'url': url, 'status': 'success'})
+        return Response({'error': 'No image file or image_base64 provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+    from garage.cloudinary_service import upload_image
+    url = upload_image(file_obj, folder=folder)
+    if not url.startswith('http'):
+        url = request.build_absolute_uri(url)
+    return Response({'url': url, 'status': 'success'})
 
 
 @api_view(['POST'])
@@ -200,6 +363,59 @@ def update_fcm_token(request):
 # -------------------------------------------------------------
 # Vehicle ViewSet
 # -------------------------------------------------------------
+# Customer Lookup & Search Endpoint
+# -------------------------------------------------------------
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def customer_lookup_view(request):
+    """
+    Search customer by customer_code (e.g. CG-1042 or 1042), phone number, or plate.
+    Returns customer info and their vehicles for fast check-in.
+    """
+    query = (request.query_params.get('q') or '').strip()
+    if not query:
+        return Response({'results': []})
+
+    from django.db.models import Q
+    code_query = query
+    if not code_query.upper().startswith('CG-') and code_query.isdigit():
+        code_query = f"CG-{code_query}"
+
+    customers = User.objects.filter(
+        Q(customer_code__iexact=query) |
+        Q(customer_code__iexact=code_query) |
+        Q(customer_code__icontains=query) |
+        Q(phone_number__icontains=query) |
+        Q(full_name__icontains=query) |
+        Q(username__icontains=query) |
+        Q(vehicles__license_plate__icontains=query)
+    ).distinct()[:15]
+
+    results = []
+    for c in customers:
+        vehicles = Vehicle.objects.filter(owner=c)
+        active_tickets = ServiceTicket.objects.filter(
+            customer=c
+        ).exclude(current_status__in=[TicketStatus.PAID_AND_CLOSED, TicketStatus.CANCELLED])
+
+        results.append({
+            'id': str(c.id),
+            'customer_code': c.customer_code,
+            'full_name': c.full_name or c.username,
+            'phone_number': c.phone_number,
+            'email': c.email,
+            'avatar_url': c.profile_safe.avatar_url if hasattr(c, 'profile_safe') else None,
+            'vehicles': VehicleSerializer(vehicles, many=True).data,
+            'active_tickets_count': active_tickets.count(),
+        })
+
+    return Response({'results': results})
+
+
+# -------------------------------------------------------------
+# Vehicle ViewSet
+# -------------------------------------------------------------
 
 class VehicleViewSet(viewsets.ModelViewSet):
     serializer_class = VehicleSerializer
@@ -208,8 +424,30 @@ class VehicleViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.role in [UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.MECHANIC]:
-            return Vehicle.objects.all().select_related('owner')
-        return Vehicle.objects.filter(owner=user).select_related('owner')
+            qs = Vehicle.objects.all().select_related('owner')
+        else:
+            qs = Vehicle.objects.filter(owner=user).select_related('owner')
+
+        search = self.request.query_params.get('search')
+        if search:
+            search = search.strip()
+            from django.db.models import Q
+            code_search = search
+            if not code_search.upper().startswith('CG-') and code_search.isdigit():
+                code_search = f"CG-{code_search}"
+            qs = qs.filter(
+                Q(license_plate__icontains=search) |
+                Q(vin__icontains=search) |
+                Q(make__icontains=search) |
+                Q(model__icontains=search) |
+                Q(owner__customer_code__iexact=search) |
+                Q(owner__customer_code__iexact=code_search) |
+                Q(owner__customer_code__icontains=search) |
+                Q(owner__phone_number__icontains=search) |
+                Q(owner__full_name__icontains=search) |
+                Q(owner__username__icontains=search)
+            )
+        return qs
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -247,8 +485,27 @@ class ServiceTicketViewSet(viewsets.ModelViewSet):
 
         # Optional query filter by status
         status_param = self.request.query_params.get('status')
-        if status_param:
+        if status_param and status_param != 'ALL':
             qs = qs.filter(current_status=status_param)
+
+        search = self.request.query_params.get('search')
+        if search:
+            search = search.strip()
+            from django.db.models import Q
+            code_search = search
+            if not code_search.upper().startswith('CG-') and code_search.isdigit():
+                code_search = f"CG-{code_search}"
+            qs = qs.filter(
+                Q(ticket_number__icontains=search) |
+                Q(vehicle__license_plate__icontains=search) |
+                Q(vehicle__make__icontains=search) |
+                Q(vehicle__model__icontains=search) |
+                Q(customer__customer_code__iexact=search) |
+                Q(customer__customer_code__iexact=code_search) |
+                Q(customer__customer_code__icontains=search) |
+                Q(customer__phone_number__icontains=search) |
+                Q(customer__full_name__icontains=search)
+            )
 
         return qs
 
@@ -566,37 +823,25 @@ class TicketPhotoViewSet(viewsets.ModelViewSet):
         return TicketPhoto.objects.all()
 
     def create(self, request, *args, **kwargs):
-        from django.conf import settings
-        from django.core.files.storage import default_storage
-        import os
+        from garage.cloudinary_service import upload_image, upload_base64_image
 
         data = request.data.copy()
 
         # Handle multipart file upload from device
         file_obj = request.FILES.get('file') or request.FILES.get('image')
         if file_obj:
-            ext = os.path.splitext(file_obj.name)[1] or '.jpg'
-            filename = f"ticket_photos/{uuid.uuid4().hex}{ext}"
-            saved_path = default_storage.save(filename, file_obj)
-            file_url = f"{settings.MEDIA_URL.rstrip('/')}/{saved_path}"
-            if not file_url.startswith('http'):
-                file_url = request.build_absolute_uri(file_url)
-            data['url'] = file_url
+            uploaded_url = upload_image(file_obj, folder='car_gar/ticket_photos')
+            if not uploaded_url.startswith('http'):
+                uploaded_url = request.build_absolute_uri(uploaded_url)
+            data['url'] = uploaded_url
 
         # Handle base64 upload if provided
         base64_data = data.get('image_base64')
         if base64_data:
-            import base64
-            from django.core.files.base import ContentFile
-            if ',' in base64_data:
-                base64_data = base64_data.split(',', 1)[1]
-            decoded_file = ContentFile(base64.b64decode(base64_data))
-            filename = f"ticket_photos/{uuid.uuid4().hex}.jpg"
-            saved_path = default_storage.save(filename, decoded_file)
-            file_url = f"{settings.MEDIA_URL.rstrip('/')}/{saved_path}"
-            if not file_url.startswith('http'):
-                file_url = request.build_absolute_uri(file_url)
-            data['url'] = file_url
+            uploaded_url = upload_base64_image(base64_data, folder='car_gar/ticket_photos')
+            if not uploaded_url.startswith('http'):
+                uploaded_url = request.build_absolute_uri(uploaded_url)
+            data['url'] = uploaded_url
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)

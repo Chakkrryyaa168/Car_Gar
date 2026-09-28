@@ -7,7 +7,7 @@ from garage.models import (
     TicketPhoto, Invoice, Payment, TicketStatusLog,
     UserRole, TicketStatus, ItemType, ApprovalStatus,
     PhotoStage, InvoiceStatus, PaymentMethod, Notification,
-    NotificationType, NotificationChannel
+    NotificationType, NotificationChannel, UserProfile
 )
 from garage.services.invoice_service import recalculate_or_create_invoice
 
@@ -72,7 +72,46 @@ class Command(BaseCommand):
         customer.set_password('customer123')
         customer.save()
 
-        self.stdout.write(self.style.SUCCESS("Users seeded successfully."))
+        # Seed User Profiles
+        admin_prof, _ = UserProfile.objects.get_or_create(user=admin)
+        admin_prof.avatar_url = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=250'
+        admin_prof.employee_id = 'EMP-ADM-001'
+        admin_prof.specialization = 'Workshop Operations & General Management'
+        admin_prof.bio = 'General Workshop Manager overseeing garage operations, staff productivity, and service quality.'
+        admin_prof.hourly_rate = Decimal('65.00')
+        admin_prof.emergency_contact = '+1 555-0999'
+        admin_prof.save()
+
+        rec_prof, _ = UserProfile.objects.get_or_create(user=receptionist)
+        rec_prof.avatar_url = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250'
+        rec_prof.employee_id = 'EMP-REC-002'
+        rec_prof.specialization = 'Customer Relations & Billing'
+        rec_prof.bio = 'Front desk lead coordinating customer check-in, repair authorizations, and vehicle delivery.'
+        rec_prof.hourly_rate = Decimal('28.00')
+        rec_prof.emergency_contact = '+1 555-0888'
+        rec_prof.save()
+
+        mech_prof, _ = UserProfile.objects.get_or_create(user=mechanic)
+        mech_prof.avatar_url = 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&q=80&w=250'
+        mech_prof.employee_id = 'EMP-MEC-101'
+        mech_prof.specialization = 'Engine & Transmission Specialist'
+        mech_prof.bio = 'ASE Certified Master Automobile Technician with 12+ years of experience in Japanese & European powertrains.'
+        mech_prof.hourly_rate = Decimal('48.50')
+        mech_prof.emergency_contact = '+1 555-0777'
+        mech_prof.save()
+
+        cust_prof, _ = UserProfile.objects.get_or_create(user=customer)
+        cust_prof.avatar_url = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250'
+        cust_prof.address = '742 Evergreen Terrace, Suite 101, Springfield'
+        cust_prof.billing_address = '742 Evergreen Terrace, Suite 101, Springfield, 97477'
+        cust_prof.secondary_phone = '+1 555-0199'
+        cust_prof.emergency_contact = '+1 555-0911'
+        cust_prof.preferred_contact_channel = 'WhatsApp'
+        cust_prof.saved_payment_method = 'CREDIT_CARD'
+        cust_prof.communication_preferences = 'ALL'
+        cust_prof.save()
+
+        self.stdout.write(self.style.SUCCESS("Users and profiles seeded successfully."))
 
         # 2. Create Vehicles
         v1, _ = Vehicle.objects.get_or_create(
