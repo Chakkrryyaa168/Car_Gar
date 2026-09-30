@@ -283,7 +283,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Ticker
                   child: Row(
                     children: [
                       const CircleAvatar(
-                        backgroundColor: Color(0xFFF97316),
+                        backgroundColor: AppColors.primary,
                         child: Icon(Icons.build, color: Colors.white, size: 18),
                       ),
                       const SizedBox(width: 12),
@@ -319,7 +319,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Ticker
                   return Card(
                     child: ListTile(
                       leading: const CircleAvatar(
-                        backgroundColor: Color(0xFFF97316),
+                        backgroundColor: AppColors.primary,
                         child: Icon(Icons.build, color: Colors.white, size: 18),
                       ),
                       title: Text(m['name'] ?? 'Mechanic', style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -424,7 +424,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Ticker
                   children: [
                     const CircleAvatar(
                       radius: 22,
-                      backgroundColor: Color(0xFF6366F1),
+                      backgroundColor: AppColors.primary,
                       child: Icon(Icons.badge, color: Colors.white),
                     ),
                     const SizedBox(width: 14),
@@ -466,14 +466,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Ticker
                   Color roleBadgeColor;
                   switch (staff.role) {
                     case 'ADMIN':
-                      roleBadgeColor = const Color(0xFF6366F1);
+                      roleBadgeColor = AppColors.charcoal;
                       break;
                     case 'RECEPTIONIST':
-                      roleBadgeColor = const Color(0xFF3B82F6);
-                      break;
                     case 'MECHANIC':
                     default:
-                      roleBadgeColor = const Color(0xFFF97316);
+                      roleBadgeColor = AppColors.primary;
                       break;
                   }
 
@@ -711,7 +709,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Ticker
                   children: const [
                     CircleAvatar(
                       radius: 22,
-                      backgroundColor: Color(0xFF1E3A5F),
+                      backgroundColor: AppColors.primary,
                       child: Icon(Icons.manage_search, color: Colors.white),
                     ),
                     SizedBox(width: 14),

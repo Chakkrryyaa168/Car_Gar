@@ -235,15 +235,16 @@ class _CheckInModalState extends State<CheckInModal> {
                     const SizedBox(height: 16),
 
                     // Mileage
-                    const Text('Current Odometer (Miles)', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Current Odometer (km)', style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _mileageController,
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
                         prefixIcon: Icon(Icons.speed, color: AppColors.textSecondary),
+                        suffixText: 'km',
                       ),
-                      validator: (v) => (v == null || v.isEmpty) ? 'Enter mileage' : null,
+                      validator: (v) => (v == null || v.isEmpty) ? 'Enter odometer reading' : null,
                     ),
                     const SizedBox(height: 16),
 

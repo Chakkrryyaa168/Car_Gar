@@ -145,7 +145,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF5F7F6B), Color(0xFF4E6B59)],
+            colors: [Color(0xFF5B7FA6), Color(0xFF4D6F94)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -184,7 +184,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF2B2F2C).withValues(alpha: 0.18),
+                              color: const Color(0xFF2E3A46).withValues(alpha: 0.16),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),

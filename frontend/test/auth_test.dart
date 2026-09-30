@@ -36,6 +36,7 @@ void main() {
     expect(find.text('Create Account'), findsOneWidget);
     expect(find.text('Sign In to Garage'), findsOneWidget);
     expect(find.text('TEST ROLE CREDENTIALS (CLICK TO FILL & VIEW)'), findsOneWidget);
+    expect(find.text('chak@gmail.com'), findsNWidgets(2)); // initial textfield & customer chip
 
     // Click on Mechanic role button to fill and display credentials
     await tester.ensureVisible(find.text('Mechanic'));
@@ -45,6 +46,9 @@ void main() {
     // Verify it didn't auto-login, but instead populated the fields and showed status
     expect(find.text('mechanic@cargarage.com'), findsNWidgets(2)); // in chip & in textfield
     expect(find.text('Sign In to Garage'), findsOneWidget);
+
+    // Verify Google Sign-In button on Login
+    expect(find.text('Continue with Google'), findsOneWidget);
 
     // Tap 'Create Account' tab
     await tester.ensureVisible(find.text('Create Account'));
@@ -57,5 +61,6 @@ void main() {
     expect(find.text('Phone Number'), findsOneWidget);
     expect(find.text('Confirm Password'), findsOneWidget);
     expect(find.text('Create Customer Account'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
   });
 }

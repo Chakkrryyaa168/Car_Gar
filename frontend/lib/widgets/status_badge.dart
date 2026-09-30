@@ -21,7 +21,7 @@ class StatusBadge extends StatelessWidget {
     final label = customLabel ?? AppColors.getStatusLabel(status);
     final upper = status.toUpperCase();
 
-    // Express status through sage vs. charcoal vs. muted gray — NO bright colors (orange/green/red)
+    // Express status through periwinkle vs. deep blue-charcoal vs. muted gray-blue — NO bright colors (orange/green/red)
     Color bgColor;
     Color borderColor;
     Color textColor;
@@ -31,30 +31,29 @@ class StatusBadge extends StatelessWidget {
       case 'APPROVED_IN_PROGRESS':
       case 'INSPECTING':
       case 'INSPECTION_PENDING':
-        bgColor = AppColors.primary; // Solid Sage #5F7F6B
-        borderColor = AppColors.primary;
-        textColor = Colors.white;
+      case 'WORK_COMPLETED':
+        // Normal active/progress states: pale periwinkle tint (#E9EEF4) with periwinkle text (#5B7FA6)
+        bgColor = const Color(0xFFE9EEF4);
+        borderColor = const Color(0xFF5B7FA6).withValues(alpha: 0.35);
+        textColor = const Color(0xFF5B7FA6);
         fontWeight = FontWeight.w600;
         break;
       case 'PENDING_CUSTOMER_APPROVAL':
-        bgColor = AppColors.surfaceElevated; // #FBF9F4
-        borderColor = AppColors.charcoal; // Strong charcoal border for urgency
-        textColor = AppColors.charcoal; // Deep charcoal text
-        fontWeight = FontWeight.w700;
-        break;
-      case 'WORK_COMPLETED':
       case 'READY_FOR_PICKUP':
-        bgColor = AppColors.sageLight; // Soft sage wash
-        borderColor = AppColors.sage;
-        textColor = AppColors.sageDark;
-        fontWeight = FontWeight.w600;
+        // Urgent / Action required: deep blue-charcoal contrast with pale periwinkle tint
+        bgColor = const Color(0xFFE9EEF4);
+        borderColor = AppColors.charcoal; // Strong #2E3A46 border for urgency
+        textColor = AppColors.charcoal; // Deep blue-charcoal text
+        fontWeight = FontWeight.w700;
         break;
       case 'PAID_AND_CLOSED':
       case 'CHECKED_IN':
+      case 'CANCELLED':
       default:
-        bgColor = AppColors.surfaceElevated; // #FBF9F4
-        borderColor = AppColors.border; // Warm light gray #E4DED0
-        textColor = AppColors.textSecondary; // Soft gray-green #7C837E
+        // Inactive / soft states: light gray background (#F1F3F6) with muted text (#8792A0)
+        bgColor = AppColors.background; // #F1F3F6 (cloud gray)
+        borderColor = AppColors.border; // #E1E5EA
+        textColor = AppColors.textSecondary; // #8792A0 (soft gray-blue)
         fontWeight = FontWeight.w500;
         break;
     }

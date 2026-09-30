@@ -140,8 +140,8 @@ class _ItemApprovalDialogState extends State<ItemApprovalDialog> {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: isApproved
-                          ? AppColors.surfaceElevated
-                          : (isRejected ? const Color(0xFFF1EDE4) : AppColors.surface),
+                          ? AppColors.surfaceWarm
+                          : (isRejected ? AppColors.background : AppColors.surface),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isApproved

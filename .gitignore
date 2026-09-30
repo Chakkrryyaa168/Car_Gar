@@ -8,4 +8,6 @@ media/
 *.sqlite3-wal
 firebase_credentials.json
 *firebase*.json
+**/google-services.json
+google-services.json
 

@@ -227,14 +227,14 @@ class _MechanicScreenState extends State<MechanicScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF5F7F6B), Color(0xFF4E6B59)],
+                colors: [Color(0xFF5B7FA6), Color(0xFF4D6F94)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF2B2F2C).withValues(alpha: 0.12),
+                  color: const Color(0xFF2E3A46).withValues(alpha: 0.10),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -367,7 +367,7 @@ class _MechanicScreenState extends State<MechanicScreen> {
                               children: [
                                 const Icon(Icons.speed, size: 14, color: AppColors.textSecondary),
                                 const SizedBox(width: 4),
-                                Text('${ticket.mileageIn} mi', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                                Text('${ticket.mileageIn} km', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
                               ],
                             ),
                             Row(
@@ -640,7 +640,7 @@ class _MechanicScreenState extends State<MechanicScreen> {
                               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              'Ticket #${ticket.ticketNumber} • Odometer: ${ticket.mileageIn} mi • Fuel: ${ticket.fuelLevelPercent}%',
+                              'Ticket #${ticket.ticketNumber} • Odometer: ${ticket.mileageIn} km • Fuel: ${ticket.fuelLevelPercent}%',
                               style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                             ),
                           ],

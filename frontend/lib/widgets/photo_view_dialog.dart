@@ -60,7 +60,7 @@ class PhotoViewDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Color(0xFF3F4541))),
+                  border: Border(bottom: BorderSide(color: AppColors.invoiceBorder)),
                 ),
                 child: Row(
                   children: [
@@ -151,7 +151,7 @@ class PhotoViewDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: const BoxDecoration(
-                  border: Border(top: BorderSide(color: Color(0xFF3F4541))),
+                  border: Border(top: BorderSide(color: AppColors.invoiceBorder)),
                 ),
                 child: Row(
                   children: [

@@ -23,9 +23,9 @@ class _AuthScreenState extends State<AuthScreen> {
   late bool _isRegister;
 
   // Login Controllers
-  final _loginEmailController = TextEditingController(text: 'customer@cargarage.com');
-  final _loginPasswordController = TextEditingController(text: 'customer123');
-  bool _loginObscure = false;
+  final _loginEmailController = TextEditingController(text: 'chak@gmail.com');
+  final _loginPasswordController = TextEditingController(text: '12345678');
+  bool _loginObscure = true;
   String? _selectedDemoRole = 'Customer';
 
   // Register Controllers
@@ -138,7 +138,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       border: Border.all(color: AppColors.border), // #E4DED0
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF2B2F2C).withValues(alpha: 0.04),
+                          color: const Color(0xFF2E3A46).withValues(alpha: 0.04),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
@@ -278,7 +278,7 @@ class _AuthScreenState extends State<AuthScreen> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF2B2F2C).withValues(alpha: 0.15),
+                color: const Color(0xFF2E3A46).withValues(alpha: 0.12),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -347,7 +347,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   SnackBar(
                     backgroundColor: AppColors.primary,
                     content: Text(
-                      'Demo: Use password "customer123", "mechanic123", or 1-tap demo logins below.',
+                      'Use test role credentials below or contact workshop administration.',
                       style: GoogleFonts.inter(color: Colors.white),
                     ),
                   ),
@@ -411,6 +411,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
           ),
         ),
+
+        // Google Sign-In Option
+        _buildGoogleSignInButton(auth),
       ],
     );
   }
@@ -692,6 +695,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
           ),
         ),
+
+        // Google Sign-In Option
+        _buildGoogleSignInButton(auth),
       ],
     );
   }
@@ -739,7 +745,7 @@ class _AuthScreenState extends State<AuthScreen> {
             mainAxisSpacing: 8,
             childAspectRatio: 2.5,
             children: [
-              _buildDemoButton('CUSTOMER', 'Customer', 'customer@cargarage.com', 'customer123', Icons.person_outline),
+              _buildDemoButton('CUSTOMER', 'Customer', 'chak@gmail.com', '12345678', Icons.person_outline),
               _buildDemoButton('RECEPTIONIST', 'Receptionist', 'reception@cargarage.com', 'reception123', Icons.desk_outlined),
               _buildDemoButton('MECHANIC', 'Mechanic', 'mechanic@cargarage.com', 'mechanic123', Icons.build_outlined),
               _buildDemoButton('ADMIN', 'Admin', 'admin@cargarage.com', 'admin123', Icons.admin_panel_settings_outlined),
@@ -790,7 +796,7 @@ class _AuthScreenState extends State<AuthScreen> {
         setState(() {
           _loginEmailController.text = email;
           _loginPasswordController.text = password;
-          _loginObscure = false;
+          _loginObscure = true;
           _selectedDemoRole = title;
         });
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -798,7 +804,7 @@ class _AuthScreenState extends State<AuthScreen> {
           SnackBar(
             backgroundColor: AppColors.primary,
             content: Text(
-              'Filled $title credentials ($email / $password). Click "Sign In" to authenticate.',
+              'Loaded $title credentials ($email). Click "Sign In" to authenticate.',
               style: GoogleFonts.inter(color: Colors.white),
             ),
             duration: const Duration(seconds: 2),
@@ -1142,4 +1148,167 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     }
   }
+
+  // -------------------------------------------------------------
+  // GOOGLE SIGN-IN BUTTON & HANDLER
+  // -------------------------------------------------------------
+  Widget _buildGoogleSignInButton(AuthProvider auth) {
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                'OR CONTINUE WITH',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ),
+            const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
+          ],
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: AppColors.surface, // Clean white
+              foregroundColor: AppColors.textPrimary,
+              side: const BorderSide(color: AppColors.border, width: 1.2),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+            onPressed: auth.isLoading ? null : _handleGoogleSignIn,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const _GoogleLogoIcon(size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  'Continue with Google',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final success = await auth.loginWithGoogle(
+      role: _isRegister ? 'CUSTOMER' : auth.currentRole,
+    );
+
+    if (success && mounted) {
+      Provider.of<TicketProvider>(context, listen: false).fetchTickets();
+      PreferencesService.setLastRole(auth.currentRole);
+      PreferencesService.setHasSeenOnboarding(true);
+
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      } else {
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const AppShell(),
+            transitionDuration: AppAnimations.durBase,
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: CurvedAnimation(parent: animation, curve: AppAnimations.ease),
+                child: child,
+              );
+            },
+          ),
+        );
+      }
+    }
+  }
+}
+
+/// Native vector painter rendering the official Google multicolor 'G' logo
+class _GoogleLogoIcon extends StatelessWidget {
+  final double size;
+  const _GoogleLogoIcon({this.size = 20});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _GoogleLogoPainter(),
+      ),
+    );
+  }
+}
+
+class _GoogleLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+    final double strokeWidth = w * 0.22;
+
+    final Paint blue = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.butt;
+
+    final Paint green = Paint()
+      ..color = const Color(0xFF34A853)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.butt;
+
+    final Paint yellow = Paint()
+      ..color = const Color(0xFFFBBC05)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.butt;
+
+    final Paint red = Paint()
+      ..color = const Color(0xFFEA4335)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.butt;
+
+    final double inset = strokeWidth / 2;
+    final Rect arcRect = Rect.fromLTWH(inset, inset, w - strokeWidth, h - strokeWidth);
+
+    // Blue arc (right and top right)
+    canvas.drawArc(arcRect, -0.6, 1.4, false, blue);
+    // Green arc (bottom right to bottom left)
+    canvas.drawArc(arcRect, 0.8, 1.6, false, green);
+    // Yellow arc (bottom left to top left)
+    canvas.drawArc(arcRect, 2.4, 1.3, false, yellow);
+    // Red arc (top left to top right)
+    canvas.drawArc(arcRect, 3.7, 1.6, false, red);
+
+    // Blue horizontal crossbar
+    final Paint barPaint = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..style = PaintingStyle.fill;
+    final Rect barRect = Rect.fromLTWH(w * 0.46, h * 0.40, w * 0.54, strokeWidth * 0.95);
+    canvas.drawRRect(RRect.fromRectAndRadius(barRect, const Radius.circular(2)), barPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

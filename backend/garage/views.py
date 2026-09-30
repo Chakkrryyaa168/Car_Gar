@@ -56,6 +56,16 @@ def demo_login_view(request):
     if role not in role_configs:
         return Response({'error': f'Invalid role: {role}'}, status=status.HTTP_400_BAD_REQUEST)
 
+    if role == UserRole.CUSTOMER:
+        chak_user = User.objects.filter(email='chak@gmail.com').first()
+        if chak_user:
+            refresh = RefreshToken.for_user(chak_user)
+            return Response({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': UserSerializer(chak_user).data
+            })
+
     username, email, full_name, phone = role_configs[role]
     user, created = User.objects.get_or_create(
         username=username,

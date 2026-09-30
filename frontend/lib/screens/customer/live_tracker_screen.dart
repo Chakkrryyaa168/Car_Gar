@@ -56,7 +56,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
             flexibleSpace: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF5F7F6B), Color(0xFF4E6B59)],
+                  colors: [Color(0xFF5B7FA6), Color(0xFF4D6F94)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -66,7 +66,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0x1F2B2F2C),
+                    color: Color(0x1F2E3A46),
                     blurRadius: 16,
                     offset: Offset(0, 4),
                   ),
@@ -227,6 +227,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
@@ -241,8 +242,11 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
+                      const SizedBox(height: 6),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
                         children: [
                           Text(
                             'Ticket #${ticket.ticketNumber}',
@@ -251,8 +255,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                               color: AppColors.textSecondary,
                             ),
                           ),
-                          if (ticket.customerCode != null) ...[
-                            const SizedBox(width: 8),
+                          if (ticket.customerCode != null)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
@@ -269,12 +272,12 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                                 ),
                               ),
                             ),
-                          ],
                         ],
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 StatusBadge(status: ticket.currentStatus, fontSize: 13),
               ],
             ),
@@ -282,7 +285,7 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildInfoMetric(Icons.speed, 'Mileage In', '${ticket.mileageIn} mi'),
+                _buildInfoMetric(Icons.speed, 'Odometer In', '${ticket.mileageIn} km'),
                 _buildInfoMetric(Icons.local_gas_station, 'Fuel Level', '${ticket.fuelLevelPercent}%'),
                 _buildInfoMetric(
                   Icons.event_available,
@@ -632,8 +635,8 @@ class _LiveTrackerScreenState extends State<LiveTrackerScreen> {
                     decoration: BoxDecoration(
                       color: isPending
                           ? (isApprovedDecision
-                              ? AppColors.surfaceElevated
-                              : const Color(0xFFF1EDE4))
+                              ? AppColors.surfaceWarm
+                              : AppColors.background)
                           : AppColors.surface,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(

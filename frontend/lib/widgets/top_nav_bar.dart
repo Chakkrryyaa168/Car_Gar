@@ -210,7 +210,7 @@ class _TopNavBarState extends State<TopNavBar> with SingleTickerProviderStateMix
           border: Border.all(color: AppColors.border), // #E4DED0
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF2B2F2C).withValues(alpha: 0.12),
+              color: const Color(0xFF2E3A46).withValues(alpha: 0.10),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -617,14 +617,14 @@ class _TopNavBarState extends State<TopNavBar> with SingleTickerProviderStateMix
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF5F7F6B), // Sage green #5F7F6B
-            Color(0xFF4E6B59), // Subtle deeper sage #4E6B59
+            Color(0xFF5B7FA6), // Soft periwinkle blue #5B7FA6
+            Color(0xFF4D6F94), // Subtle deeper periwinkle #4D6F94
           ],
         ),
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)), // 22px bottom corners
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2B2F2C).withValues(alpha: 0.12),
+            color: const Color(0xFF2E3A46).withValues(alpha: 0.10),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 
 class MobileCustomerWebScreen extends StatefulWidget {
   const MobileCustomerWebScreen({super.key});
@@ -52,11 +53,11 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final Color bgColor = isDark ? const Color(0xFF0F1520) : const Color(0xFFF8FAFC);
-    final Color surfaceColor = isDark ? const Color(0xFF171F2C) : const Color(0xFFFFFFFF);
-    final Color textColor = isDark ? const Color(0xFFE6EAF0) : const Color(0xFF1E293B);
-    final Color mutedColor = isDark ? const Color(0xFF8B96A5) : const Color(0xFF64748B);
-    final Color borderColor = isDark ? const Color(0xFF2A3444) : const Color(0xFFE2E8F0);
+    final Color bgColor = AppColors.background; // #F1F3F6
+    final Color surfaceColor = AppColors.surface; // #FFFFFF
+    final Color textColor = AppColors.textPrimary; // #2E3A46
+    final Color mutedColor = AppColors.textSecondary; // #8792A0
+    final Color borderColor = AppColors.border; // #E1E5EA
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -134,14 +135,14 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF5F7F6B), Color(0xFF4E6B59)],
+          colors: [Color(0xFF5B7FA6), Color(0xFF4D6F94)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x1F2B2F2C),
+            color: Color(0x1F2E3A46),
             blurRadius: 16,
             offset: Offset(0, 4),
           ),
@@ -195,7 +196,7 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
+                      color: const Color(0xFF2E3A46).withValues(alpha: 0.15),
                       blurRadius: 6,
                     )
                   ],
@@ -206,7 +207,7 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
                     fontFamily: 'monospace',
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
-                    color: Color(0xFF5F7F6B),
+                    color: AppColors.primary,
                     letterSpacing: 0.8,
                   ),
                 ),
@@ -230,7 +231,7 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
               Icon(Icons.access_time, size: 13, color: Colors.white70),
               SizedBox(width: 5),
               Text(
-                'Checked in Today · 8:30 AM · Odometer 42,150 mi',
+                'Checked in Today · 8:30 AM · Odometer 42,150 km',
                 style: TextStyle(fontSize: 12, color: Colors.white70),
               ),
             ],
@@ -273,16 +274,16 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                  color: AppColors.surfaceWarm,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+                  border: Border.all(color: AppColors.charcoal),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     CircleAvatar(
                       radius: 3,
-                      backgroundColor: Color(0xFFF59E0B),
+                      backgroundColor: AppColors.charcoal,
                     ),
                     SizedBox(width: 5),
                     Text(
@@ -290,7 +291,7 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFFF59E0B),
+                        color: AppColors.charcoal,
                       ),
                     ),
                   ],
@@ -329,23 +330,19 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
               height: isActive ? 26 : 20,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isCompleted
-                    ? const Color(0xFF22C55E)
-                    : isActive
-                        ? const Color(0xFFF59E0B)
-                        : Colors.transparent,
+                color: (isCompleted || isActive)
+                    ? AppColors.primary
+                    : Colors.transparent,
                 border: Border.all(
-                  color: isCompleted
-                      ? const Color(0xFF22C55E)
-                      : isActive
-                          ? Colors.white
-                          : const Color(0xFF94A3B8),
-                  width: isActive ? 2.5 : 2,
+                  color: (isCompleted || isActive)
+                      ? AppColors.primary
+                      : AppColors.border,
+                  width: isActive ? 2.5 : 1.5,
                 ),
                 boxShadow: isActive
                     ? [
                         BoxShadow(
-                          color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                          color: AppColors.primary.withValues(alpha: 0.35),
                           blurRadius: 8,
                           spreadRadius: 2,
                         )
@@ -360,7 +357,7 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: isActive ? Colors.white : const Color(0xFF94A3B8),
+                          color: isActive ? Colors.white : AppColors.textSecondary,
                         ),
                       ),
               ),
@@ -385,20 +382,12 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
     final count = _undecidedCount;
     final isDone = count == 0;
 
-    final bg = isDone
-        ? const Color(0xFF22C55E).withValues(alpha: 0.12)
-        : (isDark ? const Color(0xFF2A1B10) : const Color(0xFFFFF7ED));
-
-    final border = isDone
-        ? const Color(0xFF22C55E).withValues(alpha: 0.3)
-        : (isDark ? const Color(0xFFF97316).withValues(alpha: 0.25) : const Color(0xFFFFEDD5));
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: bg,
+        color: AppColors.surfaceWarm,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -406,7 +395,7 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: isDone ? const Color(0xFF22C55E) : const Color(0xFFF97316),
+              color: isDone ? AppColors.primary : AppColors.charcoal,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
@@ -432,14 +421,14 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: isDone ? const Color(0xFF22C55E) : const Color(0xFF9A3412),
+                    color: isDone ? AppColors.primary : AppColors.charcoal,
                   ),
                 ),
                 Text(
                   isDone
                       ? 'Technicians authorized to commence repairs.'
                       : 'Technicians are paused until you review recommendations below.',
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -464,12 +453,12 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E3A5F).withValues(alpha: 0.08),
+                color: AppColors.surfaceWarm,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 '$_undecidedCount pending',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E3A5F)),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary),
               ),
             ),
           ],
@@ -543,7 +532,7 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E3A5F), // Steel blue
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         padding: const EdgeInsets.symmetric(vertical: 10),
@@ -565,8 +554,8 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: muted,
-                        side: BorderSide(color: border, width: 1.5),
+                        foregroundColor: AppColors.textPrimary,
+                        side: BorderSide(color: border, width: 1.0),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
@@ -586,13 +575,13 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: decision == true
-                          ? const Color(0xFF22C55E).withValues(alpha: 0.12)
-                          : const Color(0xFFEF4444).withValues(alpha: 0.12),
+                          ? AppColors.surfaceWarm
+                          : AppColors.background,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: decision == true
-                            ? const Color(0xFF22C55E).withValues(alpha: 0.4)
-                            : const Color(0xFFEF4444).withValues(alpha: 0.4),
+                            ? AppColors.primary.withValues(alpha: 0.4)
+                            : AppColors.border,
                       ),
                     ),
                     child: Row(
@@ -603,7 +592,7 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: decision == true ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+                            color: decision == true ? AppColors.primary : AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -700,17 +689,24 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isCompleted
-                  ? const Color(0xFF14B8A6).withValues(alpha: 0.15)
+                  ? AppColors.surfaceWarm
                   : isDeclined
-                      ? const Color(0xFFEF4444).withValues(alpha: 0.1)
-                      : const Color(0xFFE2E8F0),
+                      ? AppColors.background
+                      : AppColors.background,
+              border: Border.all(
+                color: isCompleted
+                    ? AppColors.primary
+                    : isDeclined
+                        ? AppColors.border
+                        : AppColors.border,
+              ),
             ),
             child: Center(
               child: isCompleted
-                  ? const Icon(Icons.check, size: 13, color: Color(0xFF14B8A6)) // Teal checkmark
+                  ? const Icon(Icons.check, size: 13, color: AppColors.primary)
                   : isDeclined
-                      ? const Icon(Icons.close, size: 12, color: Color(0xFFEF4444))
-                      : const CircleAvatar(radius: 3, backgroundColor: Color(0xFF94A3B8)), // Gray dot
+                      ? const Icon(Icons.close, size: 12, color: AppColors.textSecondary)
+                      : const CircleAvatar(radius: 3, backgroundColor: AppColors.textSecondary),
             ),
           ),
           const SizedBox(width: 12),
@@ -733,15 +729,12 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
   Widget _buildInvoiceCard() {
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF5F7F6B), Color(0xFF4E6B59)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.invoiceBg, // #2E3A46 deep blue-charcoal
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.invoiceBorder),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2B2F2C).withValues(alpha: 0.12),
+            color: const Color(0xFF2E3A46).withValues(alpha: 0.12),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -754,10 +747,10 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Estimated invoice',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.invoiceText,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -765,12 +758,12 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
+                  color: const Color(0xFF3D4C5A),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
                   'Real-time estimate',
-                  style: TextStyle(color: Colors.white70, fontSize: 11),
+                  style: TextStyle(color: Color(0xFF8792A0), fontSize: 11),
                 ),
               ),
             ],
@@ -789,20 +782,20 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
           const SizedBox(height: 6),
           _buildInvoiceLine('Estimated Sales Tax (7.0%)', '\$${_tax.toStringAsFixed(2)}', isMuted: true),
 
-          const Divider(color: Colors.white24, height: 24),
+          const Divider(color: Color(0xFF3D4C5A), height: 24),
 
           // Total row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Total Balance',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                style: TextStyle(color: AppColors.invoiceText, fontWeight: FontWeight.bold, fontSize: 14),
               ),
               Text(
                 '\$${_total.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: AppColors.invoiceText,
                   fontWeight: FontWeight.bold,
                   fontSize: 22,
                   fontFamily: 'monospace',
@@ -812,13 +805,13 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Full-width orange pay button
+          // Full-width periwinkle pay button
           SizedBox(
             width: double.infinity,
             height: 48,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF97316), // #F97316 safety orange
+                backgroundColor: AppColors.primary, // #5B7FA6 soft periwinkle
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 elevation: 0,
@@ -844,14 +837,14 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
           Text(
             label,
             style: TextStyle(
-              color: isMuted ? Colors.white60 : Colors.white.withValues(alpha: 0.9),
+              color: isMuted ? AppColors.invoiceMuted : AppColors.invoiceText.withValues(alpha: 0.9),
               fontSize: isMuted ? 12 : 13,
             ),
           ),
           Text(
             amount,
             style: TextStyle(
-              color: isMuted ? Colors.white60 : Colors.white,
+              color: isMuted ? AppColors.invoiceMuted : AppColors.invoiceText,
               fontSize: isMuted ? 12 : 13,
               fontWeight: FontWeight.w600,
             ),
@@ -883,21 +876,21 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
 
   Widget _buildNavTab(int index, IconData icon, String label, bool isDark) {
     final isActive = _selectedTabIndex == index;
-    final activeColor = isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A5F);
+    final activeColor = AppColors.primary; // Soft periwinkle blue #5B7FA6
 
     return InkWell(
       onTap: () => setState(() => _selectedTabIndex = index),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 20, color: isActive ? activeColor : const Color(0xFF64748B)),
+          Icon(icon, size: 20, color: isActive ? activeColor : AppColors.textSecondary),
           const SizedBox(height: 3),
           Text(
             label,
             style: TextStyle(
               fontSize: 11,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              color: isActive ? activeColor : const Color(0xFF64748B),
+              color: isActive ? activeColor : AppColors.textSecondary,
             ),
           ),
         ],
@@ -924,7 +917,7 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
             const SizedBox(height: 8),
             const Text(
               'Total approved balance will be collected upon vehicle completion and pickup.',
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
             Row(
@@ -933,7 +926,7 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
                 const Text('Current Approved Balance:'),
                 Text(
                   '\$${_total.toStringAsFixed(2)}',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E3A5F)),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
               ],
             ),
@@ -943,7 +936,7 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF97316),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                 ),
                 onPressed: () {
@@ -951,7 +944,7 @@ class _MobileCustomerWebScreenState extends State<MobileCustomerWebScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Payment pre-authorized! We will notify you once repairs finish.'),
-                      backgroundColor: Color(0xFF22C55E),
+                      backgroundColor: AppColors.primary,
                     ),
                   );
                 },

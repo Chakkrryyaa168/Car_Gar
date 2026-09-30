@@ -33,7 +33,7 @@ class _InventoryManagementScreenState extends State<InventoryManagementScreen> {
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF5F7F6B), Color(0xFF4E6B59)],
+              colors: [Color(0xFF5B7FA6), Color(0xFF4D6F94)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -43,7 +43,7 @@ class _InventoryManagementScreenState extends State<InventoryManagementScreen> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Color(0x1F2B2F2C),
+                color: Color(0x1F2E3A46),
                 blurRadius: 16,
                 offset: Offset(0, 4),
               ),

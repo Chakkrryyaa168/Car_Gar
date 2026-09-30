@@ -367,7 +367,7 @@ class FocusGlowWrapper extends StatefulWidget {
     super.key,
     required this.child,
     this.borderRadius,
-    this.glowColor = const Color(0x335F7F6B), // Soft sage glow
+    this.glowColor = const Color(0x335B7FA6), // Soft periwinkle glow
   });
 
   @override
@@ -429,10 +429,10 @@ class MorphingDecisionButton extends StatelessWidget {
         curve: AppAnimations.ease,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: isApproved ? const Color(0xFF5F7F6B) : Colors.transparent,
+          color: isApproved ? const Color(0xFF5B7FA6) : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: isApproved ? const Color(0xFF5F7F6B) : const Color(0xFFE4DED0),
+            color: isApproved ? const Color(0xFF5B7FA6) : const Color(0xFFE1E5EA),
             width: 1,
           ),
         ),
@@ -453,7 +453,7 @@ class MorphingDecisionButton extends StatelessWidget {
               Icon(
                 isApproved ? Icons.check : Icons.close,
                 size: 12,
-                color: isApproved ? Colors.white : const Color(0xFF2B2F2C),
+                color: isApproved ? Colors.white : const Color(0xFF2E3A46),
               ),
               const SizedBox(width: 4),
               Text(
@@ -461,7 +461,7 @@ class MorphingDecisionButton extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: isApproved ? FontWeight.w700 : FontWeight.w600,
-                  color: isApproved ? Colors.white : const Color(0xFF2B2F2C),
+                  color: isApproved ? Colors.white : const Color(0xFF2E3A46),
                 ),
               ),
             ],
@@ -493,9 +493,9 @@ class SlidingSegmentedTab extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBF9F4),
+        color: const Color(0xFFF1F3F6),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE4DED0)),
+        border: Border.all(color: const Color(0xFFE1E5EA)),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -513,11 +513,11 @@ class SlidingSegmentedTab extends StatelessWidget {
                 width: tabWidth,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF5F7F6B),
+                    color: const Color(0xFF5B7FA6),
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF2B2F2C).withValues(alpha: 0.1),
+                        color: const Color(0xFF2E3A46).withValues(alpha: 0.08),
                         blurRadius: 4,
                         offset: const Offset(0, 1),
                       ),
@@ -541,7 +541,7 @@ class SlidingSegmentedTab extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                            color: isSelected ? Colors.white : const Color(0xFF7C837E),
+                            color: isSelected ? Colors.white : const Color(0xFF8792A0),
                           ),
                           textAlign: TextAlign.center,
                           child: Text(labels[index]),

@@ -32,19 +32,19 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       primaryColor: AppColors.primary,
-      scaffoldBackgroundColor: AppColors.background, // #F5F1E8 (Warm Sand)
+      scaffoldBackgroundColor: AppColors.background, // #F1F3F6 (Cloud Gray)
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primary, // #5F7F6B (Sage Green)
-        secondary: AppColors.secondary, // #7C837E (Soft Gray-Green)
+        primary: AppColors.primary, // #5B7FA6 (Soft Periwinkle Blue)
+        secondary: AppColors.secondary, // #8792A0 (Soft Gray-Blue)
         surface: AppColors.surface, // #FFFFFF (Clean White Card)
         error: AppColors.textSecondary,
-        onPrimary: Colors.white, // White text on Sage Green
+        onPrimary: Colors.white, // White text on Periwinkle
         onSecondary: AppColors.textPrimary,
-        onSurface: AppColors.textPrimary, // #2B2F2C (Deep Charcoal)
+        onSurface: AppColors.textPrimary, // #2E3A46 (Deep Blue-Charcoal)
       ),
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.topBarBackground, // #5F7F6B
+        backgroundColor: AppColors.topBarBackground, // #5B7FA6
         foregroundColor: AppColors.topBarText, // White
         elevation: 0,
         centerTitle: false,
@@ -60,13 +60,13 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: AppColors.border, width: 1), // #E4DED0
+          side: const BorderSide(color: AppColors.border, width: 1), // #E1E5EA
         ),
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary, // Solid Sage #5F7F6B
+          backgroundColor: AppColors.primary, // Solid Periwinkle #5B7FA6
           foregroundColor: Colors.white, // White text
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -81,8 +81,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary, // Charcoal text #2B2F2C
-          side: const BorderSide(color: AppColors.border, width: 1), // Border color #E4DED0
+          foregroundColor: AppColors.textPrimary, // Deep Blue-Charcoal text #2E3A46
+          side: const BorderSide(color: AppColors.border, width: 1), // Border color #E1E5EA
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -119,8 +119,8 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary, // Sage Green
-        unselectedItemColor: AppColors.textSecondary, // Soft Gray-Green
+        selectedItemColor: AppColors.primary, // Periwinkle Blue
+        unselectedItemColor: AppColors.textSecondary, // Soft Gray-Blue
         elevation: 0,
       ),
       pageTransitionsTheme: const PageTransitionsTheme(

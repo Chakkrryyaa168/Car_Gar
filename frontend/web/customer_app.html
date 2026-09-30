@@ -9,35 +9,35 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #1E3A5F;
-      --primary-dark: #152A45;
-      --accent: #F97316;
-      --accent-hover: #EA580C;
-      --bg: #F8FAFC;
+      --primary: #5B7FA6;
+      --primary-dark: #4D6F94;
+      --accent: #5B7FA6;
+      --accent-hover: #4D6F94;
+      --bg: #F1F3F6;
       --surface: #FFFFFF;
-      --text: #1E293B;
-      --muted: #64748B;
-      --border: #E2E8F0;
+      --text: #2E3A46;
+      --muted: #8792A0;
+      --border: #E1E5EA;
 
-      /* Status Colors */
-      --status-gray: #94A3B8;
-      --status-blue: #3B82F6;
-      --status-amber: #F59E0B;
-      --status-indigo: #6366F1;
-      --status-teal: #14B8A6;
-      --status-orange: #F97316;
-      --status-green: #22C55E;
-      --status-red: #EF4444;
+      /* Status Colors (periwinkle vs. deep blue-charcoal vs. gray-blue contrast) */
+      --status-gray: #8792A0;
+      --status-blue: #5B7FA6;
+      --status-amber: #2E3A46;
+      --status-indigo: #5B7FA6;
+      --status-teal: #5B7FA6;
+      --status-orange: #2E3A46;
+      --status-green: #5B7FA6;
+      --status-red: #8792A0;
 
       /* Semantic Alert */
-      --alert-bg: #FFF7ED;
-      --alert-border: #FFEDD5;
-      --alert-text: #9A3412;
+      --alert-bg: #E9EEF4;
+      --alert-border: #E1E5EA;
+      --alert-text: #2E3A46;
 
       --card-radius: 14px;
-      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-      --shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
-      --shadow-lg: 0 12px 24px -4px rgba(30, 58, 95, 0.12);
+      --shadow-sm: 0 1px 3px rgba(46, 58, 70, 0.04);
+      --shadow-md: 0 4px 14px -2px rgba(46, 58, 70, 0.06);
+      --shadow-lg: 0 12px 24px -4px rgba(46, 58, 70, 0.10);
     }
 
     @media (prefers-color-scheme: dark) {
@@ -118,7 +118,7 @@
 
     /* 1. TOP BAR */
     .top-bar {
-      background: linear-gradient(145deg, #1E3A5F 0%, #152A45 100%);
+      background: linear-gradient(145deg, #5B7FA6 0%, #4D6F94 100%);
       color: #FFFFFF;
       padding: 24px 20px 52px 20px;
       border-bottom-left-radius: 24px;
@@ -633,8 +633,9 @@
 
     /* 6. ESTIMATED INVOICE CARD */
     .invoice-card {
-      background: linear-gradient(150deg, #1E3A5F 0%, #11233B 100%);
-      color: #FFFFFF;
+      background: #2E3A46;
+      border: 1px solid #3D4C5A;
+      color: #F1F3F6;
       border-radius: var(--card-radius);
       padding: 20px;
       box-shadow: var(--shadow-lg);
@@ -853,7 +854,7 @@
           <circle cx="12" cy="12" r="10"></circle>
           <polyline points="12 6 12 12 16 14"></polyline>
         </svg>
-        Checked in Today · 8:30 AM · Odometer 42,150 mi
+        Checked in Today · 8:30 AM · Odometer 42,150 km
       </div>
     </header>
 

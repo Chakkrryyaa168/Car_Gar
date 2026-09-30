@@ -104,7 +104,7 @@ class _ProgressStepperState extends State<ProgressStepper> with TickerProviderSt
         border: Border.all(color: AppColors.border), // #E4DED0
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2B2F2C).withValues(alpha: 0.03),
+            color: const Color(0xFF2E3A46).withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

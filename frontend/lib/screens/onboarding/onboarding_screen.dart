@@ -352,7 +352,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF2B2F2C).withValues(alpha: 0.12),
+                                color: const Color(0xFF2E3A46).withValues(alpha: 0.10),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -492,7 +492,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
               color: AppColors.primary.withValues(alpha: 0.12),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF2B2F2C).withValues(alpha: 0.05),
+                  color: const Color(0xFF2E3A46).withValues(alpha: 0.04),
                   blurRadius: 14,
                   offset: const Offset(0, 6),
                 ),
@@ -515,10 +515,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
               decoration: BoxDecoration(
                 color: AppColors.surface, // Clean white #FFFFFF
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.border), // Warm gray #E4DED0
+                border: Border.all(color: AppColors.border), // Light cloud gray #E1E5EA
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF2B2F2C).withValues(alpha: 0.08),
+                    color: const Color(0xFF2E3A46).withValues(alpha: 0.06),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
